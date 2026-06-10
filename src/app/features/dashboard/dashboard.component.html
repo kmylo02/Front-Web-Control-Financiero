@@ -1,0 +1,112 @@
+<div *ngIf="loading" class="spinner"></div>
+
+<ng-container *ngIf="!loading && summary">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1>Dashboard</h1>
+      <p class="text-muted">{{ monthName }} {{ year }}</p>
+    </div>
+    <a routerLink="/expenses" class="btn btn-primary">+ Nuevo gasto</a>
+  </div>
+
+  <!-- Alerta recurrentes pendientes -->
+  <div *ngIf="pendingRecurring.length" class="alert-banner">
+    <span>🔄 Tienes {{ pendingRecurring.length }} gasto(s) recurrente(s) pendientes de confirmar este mes.</span>
+    <a routerLink="/recurring" class="btn btn-sm btn-outline">Ver ahora</a>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="stat-cards">
+    <div class="stat-card">
+      <div class="stat-label">Ingresos del mes</div>
+      <div class="stat-value text-success">{{ formatCurrency(summary.totalIncomes) }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Gastos del mes</div>
+      <div class="stat-value text-danger">{{ formatCurrency(summary.totalExpenses) }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Balance</div>
+      <div class="stat-value" [class.text-success]="summary.balance >= 0" [class.text-danger]="summary.balance < 0">
+        {{ formatCurrency(summary.balance) }}
+      </div>
+    </div>
+    <div class="stat-card" *ngIf="summary.budget.budget">
+      <div class="stat-label">Presupuesto</div>
+      <div class="stat-value">{{ usagePercent }}%</div>
+      <div class="progress-bar mt-8">
+        <div class="progress-fill" [class]="usageClass" [style.width.%]="usagePercent > 100 ? 100 : usagePercent"></div>
+      </div>
+      <div class="stat-change text-muted">
+        Restante: {{ formatCurrency(summary.budget.remaining ?? 0) }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid">
+    <div class="card">
+      <h3 class="card-title">Gastos por categoría</h3>
+      <div *ngIf="summary.byCategory?.length; else noData">
+        <canvas baseChart [data]="donutData" [options]="donutOptions" type="doughnut"></canvas>
+      </div>
+      <ng-template #noData>
+        <div class="empty-state">
+          <div class="empty-icon">🍩</div>
+          <h3>Sin gastos este mes</h3>
+        </div>
+      </ng-template>
+    </div>
+
+    <div class="card">
+      <h3 class="card-title">Ingresos vs Gastos {{ year }}</h3>
+      <canvas baseChart [data]="barData" [options]="barOptions" type="bar"></canvas>
+    </div>
+  </div>
+
+  <!-- Recent transactions -->
+  <div class="recent-grid">
+    <div class="card">
+      <div class="d-flex justify-between align-center mb-16">
+        <h3 class="card-title">Últimos gastos</h3>
+        <a routerLink="/expenses" class="btn btn-ghost btn-sm">Ver todos →</a>
+      </div>
+      <div *ngIf="recentExpenses.length; else noExp">
+        <div *ngFor="let exp of recentExpenses" class="transaction-row">
+          <div class="cat-dot" [style.background]="getCategoryColor(exp)"></div>
+          <div class="tx-info">
+            <span class="tx-desc">{{ exp.description }}</span>
+            <span class="tx-meta">{{ getCategoryName(exp) }} · {{ exp.date | date:'d MMM' }}</span>
+          </div>
+          <span class="tx-amount text-danger">- {{ formatCurrency(exp.amount) }}</span>
+        </div>
+      </div>
+      <ng-template #noExp>
+        <p class="text-muted text-center mt-16">Sin gastos este mes</p>
+      </ng-template>
+    </div>
+
+    <div class="card">
+      <div class="d-flex justify-between align-center mb-16">
+        <h3 class="card-title">Últimos ingresos</h3>
+        <a routerLink="/incomes" class="btn btn-ghost btn-sm">Ver todos →</a>
+      </div>
+      <div *ngIf="recentIncomes.length; else noInc">
+        <div *ngFor="let inc of recentIncomes" class="transaction-row">
+          <div class="cat-dot" style="background: #22c55e"></div>
+          <div class="tx-info">
+            <span class="tx-desc">{{ inc.description }}</span>
+            <span class="tx-meta">{{ inc.date | date:'d MMM' }}</span>
+          </div>
+          <span class="tx-amount text-success">+ {{ formatCurrency(inc.amount) }}</span>
+        </div>
+      </div>
+      <ng-template #noInc>
+        <p class="text-muted text-center mt-16">Sin ingresos este mes</p>
+      </ng-template>
+    </div>
+  </div>
+
+</ng-container>

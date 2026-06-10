@@ -1,0 +1,41 @@
+.section-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
+
+.compare-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.compare-card {
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 16px;
+
+  h4 { font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--text-muted); }
+}
+
+.compare-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.compare-amounts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 900px) {
+  .compare-grid, .charts-grid { grid-template-columns: 1fr; }
+}

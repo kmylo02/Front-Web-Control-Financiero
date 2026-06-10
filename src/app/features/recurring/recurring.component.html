@@ -1,0 +1,119 @@
+<div class="page-header">
+  <h1>Gastos Recurrentes</h1>
+  <button class="btn btn-primary" (click)="openNew()">+ Nuevo recurrente</button>
+</div>
+
+<!-- Pendientes -->
+<div *ngIf="pending.length" class="card pending-section mb-24">
+  <h3 class="section-title">⏳ Pendientes de confirmar este mes ({{ pending.length }})</h3>
+  <div class="pending-list">
+    <div *ngFor="let rec of pending" class="pending-item">
+      <div>
+        <span class="fw-600">{{ rec.name }}</span>
+        <span class="text-muted ml-8">{{ formatCurrency(rec.amount) }}</span>
+        <span class="badge" [class.badge-info]="rec.mode==='template'" [class.badge-warning]="rec.mode==='manual'">
+          {{ modeLabel(rec.mode) }}
+        </span>
+      </div>
+      <button class="btn btn-success btn-sm" [disabled]="activatingId === rec._id" (click)="activate(rec._id)">
+        {{ activatingId === rec._id ? '...' : '✓ Confirmar' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="loading" class="spinner"></div>
+
+<div *ngIf="!loading" class="card">
+  <div *ngIf="recurrents.length; else empty" class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Nombre</th><th>Categoría</th><th>Tipo</th><th>Modo</th><th>Día</th><th>Estado</th><th>Monto</th><th></th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let rec of recurrents">
+          <td class="fw-600">{{ rec.name }}</td>
+          <td>{{ getCatName(rec) }}</td>
+          <td>
+            <span class="badge" [class.badge-danger]="rec.type==='expense'" [class.badge-success]="rec.type==='income'">
+              {{ rec.type === 'expense' ? 'Gasto' : 'Ingreso' }}
+            </span>
+          </td>
+          <td>
+            <span class="badge badge-info">{{ modeLabel(rec.mode) }}</span>
+          </td>
+          <td>Día {{ rec.dayOfMonth }}</td>
+          <td>
+            <span class="badge" [class.badge-success]="rec.isActive" [class.badge-warning]="!rec.isActive">
+              {{ rec.isActive ? 'Activo' : 'Pausado' }}
+            </span>
+          </td>
+          <td class="fw-600">{{ formatCurrency(rec.amount) }}</td>
+          <td>
+            <div class="d-flex gap-8 justify-end">
+              <button class="btn btn-ghost btn-icon btn-sm" (click)="openEdit(rec)">✏️</button>
+              <button class="btn btn-ghost btn-icon btn-sm" (click)="delete(rec._id)">🗑️</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <ng-template #empty>
+    <div class="empty-state">
+      <div class="empty-icon">🔄</div>
+      <h3>Sin recurrentes configurados</h3>
+      <p>Agrega tus gastos fijos como arriendo, servicios, suscripciones...</p>
+    </div>
+  </ng-template>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ editingId ? 'Editar recurrente' : 'Nuevo recurrente' }}</h2>
+      <button class="btn btn-ghost btn-icon" (click)="closeModal()">✕</button>
+    </div>
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <div class="form-group"><label>Nombre</label><input formControlName="name" placeholder="Ej: Arriendo apartamento" /></div>
+      <div class="form-row">
+        <div class="form-group"><label>Monto</label><input type="number" formControlName="amount" min="1" /></div>
+        <div class="form-group"><label>Día del mes</label><input type="number" formControlName="dayOfMonth" min="1" max="28" /></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Tipo</label>
+          <select formControlName="type">
+            <option value="expense">Gasto</option>
+            <option value="income">Ingreso</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Categoría</label>
+          <select formControlName="categoryId">
+            <option value="">Selecciona</option>
+            <option *ngFor="let cat of categories" [value]="cat._id">{{ cat.name }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Modo</label>
+        <div class="mode-selector">
+          <label *ngFor="let m of modes" class="mode-option" [class.selected]="form.value.mode === m.value">
+            <input type="radio" formControlName="mode" [value]="m.value" hidden />
+            <span class="mode-label">{{ m.label }}</span>
+            <span class="mode-desc">{{ m.desc }}</span>
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" (click)="closeModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary" [disabled]="form.invalid || saving">
+          {{ saving ? 'Guardando...' : 'Guardar' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

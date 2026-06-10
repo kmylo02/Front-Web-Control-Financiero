@@ -1,0 +1,33 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <span class="logo-icon">💰</span>
+      <h1>Crear cuenta</h1>
+      <p>Comienza a controlar tus finanzas hoy</p>
+    </div>
+
+    <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <div class="form-group">
+        <label>Nombre completo</label>
+        <input type="text" formControlName="name" placeholder="Tu nombre" />
+      </div>
+      <div class="form-group">
+        <label>Correo electrónico</label>
+        <input type="email" formControlName="email" placeholder="tu@correo.com" />
+      </div>
+      <div class="form-group">
+        <label>Contraseña</label>
+        <input type="password" formControlName="password" placeholder="Mínimo 6 caracteres" />
+      </div>
+      <button type="submit" class="btn btn-primary btn-full" [disabled]="form.invalid || loading">
+        {{ loading ? 'Creando cuenta...' : 'Registrarse' }}
+      </button>
+    </form>
+
+    <p class="auth-link">
+      ¿Ya tienes cuenta? <a routerLink="/auth/login">Inicia sesión</a>
+    </p>
+  </div>
+</div>

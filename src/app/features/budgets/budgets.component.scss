@@ -1,0 +1,36 @@
+.section-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
+.budget-form { max-width: 400px; }
+.form-actions { display: flex; gap: 12px; }
+
+.budget-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 8px;
+}
+.budget-kpi { .kpi-label { font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px; }
+  .kpi-value { font-size: 20px; font-weight: 700; } }
+
+.text-warning { color: var(--warning); }
+
+.category-breakdown {
+  h4 { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+}
+.cat-row {
+  display: grid;
+  grid-template-columns: 160px 1fr 180px;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  &:last-child { border-bottom: none; }
+}
+.cat-name { font-size: 13px; font-weight: 500; }
+.cat-bar { display: flex; align-items: center; gap: 8px; }
+.cat-pct { font-size: 12px; color: var(--text-muted); min-width: 36px; text-align: right; }
+.cat-amounts { text-align: right; font-size: 13px; }
+
+@media (max-width: 700px) {
+  .budget-summary { grid-template-columns: 1fr 1fr; }
+  .cat-row { grid-template-columns: 1fr; gap: 4px; }
+}

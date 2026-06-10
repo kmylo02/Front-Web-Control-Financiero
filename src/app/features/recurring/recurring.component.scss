@@ -1,0 +1,19 @@
+.pending-section { border-left: 4px solid var(--warning); }
+.section-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
+.pending-list { display: flex; flex-direction: column; gap: 10px; }
+.pending-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 16px; background: var(--bg); border-radius: 8px;
+  .ml-8 { margin-left: 8px; }
+}
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.mode-selector { display: flex; flex-direction: column; gap: 8px; }
+.mode-option {
+  display: flex; flex-direction: column; padding: 12px 16px;
+  border: 2px solid var(--border); border-radius: 8px; cursor: pointer; transition: all .2s;
+  &.selected { border-color: var(--primary); background: #ede9fe; }
+  .mode-label { font-weight: 600; font-size: 14px; }
+  .mode-desc  { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+}

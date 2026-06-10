@@ -1,0 +1,86 @@
+<div class="page-header">
+  <h1>Presupuesto — {{ monthName }} {{ year }}</h1>
+</div>
+
+<div *ngIf="loading" class="spinner"></div>
+
+<ng-container *ngIf="!loading">
+
+  <!-- Formulario presupuesto -->
+  <div class="card mb-24">
+    <h3 class="section-title">{{ budget ? 'Actualizar presupuesto' : 'Definir presupuesto del mes' }}</h3>
+    <form [formGroup]="form" (ngSubmit)="save()" class="budget-form">
+      <div class="form-group">
+        <label>Límite total del mes</label>
+        <input type="number" formControlName="totalLimit" placeholder="Ej: 3000000" min="1" />
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" [disabled]="form.invalid || saving">
+          {{ saving ? 'Guardando...' : budget ? 'Actualizar' : 'Guardar presupuesto' }}
+        </button>
+        <button *ngIf="budget" type="button" class="btn btn-danger" (click)="deleteBudget()">Eliminar</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Resumen de uso -->
+  <div *ngIf="summary && budget" class="card">
+    <h3 class="section-title">Uso del presupuesto</h3>
+
+    <div class="budget-summary">
+      <div class="budget-kpi">
+        <span class="kpi-label">Presupuesto</span>
+        <span class="kpi-value">{{ formatCurrency(budget.totalLimit) }}</span>
+      </div>
+      <div class="budget-kpi">
+        <span class="kpi-label">Gastado</span>
+        <span class="kpi-value text-danger">{{ formatCurrency(summary.totalExpenses) }}</span>
+      </div>
+      <div class="budget-kpi">
+        <span class="kpi-label">Restante</span>
+        <span class="kpi-value" [class.text-success]="(summary.budget.remaining ?? 0) >= 0"
+                                [class.text-danger]="(summary.budget.remaining ?? 0) < 0">
+          {{ formatCurrency(summary.budget.remaining ?? 0) }}
+        </span>
+      </div>
+      <div class="budget-kpi">
+        <span class="kpi-label">Uso</span>
+        <span class="kpi-value" [class.text-danger]="usagePercent >= 100" [class.text-warning]="usagePercent >= 80">
+          {{ usagePercent }}%
+        </span>
+      </div>
+    </div>
+
+    <div class="progress-bar mt-16" style="height: 16px;">
+      <div class="progress-fill" [class]="usageClass"
+           [style.width.%]="usagePercent > 100 ? 100 : usagePercent"></div>
+    </div>
+
+    <!-- Por categoría -->
+    <div *ngIf="summary.budget.categoryBreakdown?.length" class="category-breakdown mt-24">
+      <h4>Por categoría</h4>
+      <div *ngFor="let cb of summary.budget.categoryBreakdown" class="cat-row">
+        <span class="cat-name">{{ cb.categoryId?.name ?? 'Categoría' }}</span>
+        <div class="cat-bar">
+          <div class="progress-bar">
+            <div class="progress-fill" [class.danger]="cb.usagePercent >= 100" [class.warning]="cb.usagePercent >= 80"
+                 [style.width.%]="cb.usagePercent > 100 ? 100 : cb.usagePercent"></div>
+          </div>
+          <span class="cat-pct">{{ cb.usagePercent }}%</span>
+        </div>
+        <div class="cat-amounts">
+          <span class="text-danger">{{ formatCurrency(cb.spent) }}</span>
+          <span class="text-muted">/ {{ formatCurrency(cb.limit) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!budget" class="card">
+    <div class="empty-state">
+      <div class="empty-icon">🎯</div>
+      <h3>Sin presupuesto para este mes</h3>
+      <p>Define un límite de gasto y mantén tus finanzas bajo control</p>
+    </div>
+  </div>
+</ng-container>

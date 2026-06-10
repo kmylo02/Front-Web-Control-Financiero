@@ -1,0 +1,113 @@
+<div class="page-header">
+  <h1>Reportes — {{ year }}</h1>
+</div>
+
+<div *ngIf="loading" class="spinner"></div>
+
+<ng-container *ngIf="!loading && yearly">
+
+  <!-- KPIs anuales -->
+  <div class="stat-cards">
+    <div class="stat-card">
+      <div class="stat-label">Total ingresos {{ year }}</div>
+      <div class="stat-value text-success">{{ formatCurrency(yearly.totalIncomes) }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total gastos {{ year }}</div>
+      <div class="stat-value text-danger">{{ formatCurrency(yearly.totalExpenses) }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Balance anual</div>
+      <div class="stat-value" [class.text-success]="yearly.balance >= 0" [class.text-danger]="yearly.balance < 0">
+        {{ formatCurrency(yearly.balance) }}
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Promedio mensual gasto</div>
+      <div class="stat-value">{{ formatCurrency(yearly.averageMonthlyExpense) }}</div>
+    </div>
+  </div>
+
+  <!-- Comparativa mes actual -->
+  <div *ngIf="comparison" class="card mb-16">
+    <h3 class="section-title">Comparativa {{ monthName }} {{ year }}</h3>
+    <div class="compare-grid">
+      <div class="compare-card">
+        <h4>vs Mes anterior</h4>
+        <div class="compare-row">
+          <span>Gastos</span>
+          <span class="fw-600" [class]="changeClass(comparison.changes.expensesVsPreviousMonth, true)">
+            {{ changeSign(comparison.changes.expensesVsPreviousMonth) }}
+          </span>
+        </div>
+        <div class="compare-amounts">
+          <span>Actual: {{ formatCurrency(comparison.current.expenses) }}</span>
+          <span class="text-muted">Anterior: {{ formatCurrency(comparison.previousMonth.expenses) }}</span>
+        </div>
+      </div>
+
+      <div class="compare-card">
+        <h4>vs Mismo mes año anterior</h4>
+        <div class="compare-row">
+          <span>Gastos</span>
+          <span class="fw-600" [class]="changeClass(comparison.changes.expensesVsLastYear, true)">
+            {{ changeSign(comparison.changes.expensesVsLastYear) }}
+          </span>
+        </div>
+        <div class="compare-amounts">
+          <span>Actual: {{ formatCurrency(comparison.current.expenses) }}</span>
+          <span class="text-muted">Año pasado: {{ formatCurrency(comparison.sameMonthLastYear.expenses) }}</span>
+        </div>
+      </div>
+
+      <div class="compare-card">
+        <h4>Comparación años</h4>
+        <div class="compare-row" *ngIf="yearComp?.changes">
+          <span>Gastos</span>
+          <span class="fw-600" [class]="changeClass(yearComp.changes.expensesPercent, true)">
+            {{ changeSign(yearComp.changes.expensesPercent) }}
+          </span>
+        </div>
+        <div class="compare-amounts" *ngIf="yearComp">
+          <span>{{ year }}: {{ formatCurrency(yearComp.currentYear.totalExpenses) }}</span>
+          <span class="text-muted">{{ year - 1 }}: {{ formatCurrency(yearComp.previousYear.totalExpenses) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gráficas -->
+  <div class="charts-grid">
+    <div class="card">
+      <h3 class="section-title">Balance mensual {{ year }}</h3>
+      <canvas baseChart [data]="lineData" [options]="lineOptions" type="line"></canvas>
+    </div>
+    <div class="card">
+      <h3 class="section-title">Gastos: {{ year }} vs {{ year - 1 }}</h3>
+      <canvas baseChart [data]="barData" [options]="barOptions" type="bar"></canvas>
+    </div>
+  </div>
+
+  <!-- Tabla mensual -->
+  <div class="card">
+    <h3 class="section-title">Detalle mensual {{ year }}</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Mes</th><th>Ingresos</th><th>Gastos</th><th>Balance</th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let m of yearly.months">
+            <td class="fw-600">{{ ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][m.month - 1] }}</td>
+            <td class="text-success">{{ m.incomes > 0 ? formatCurrency(m.incomes) : '-' }}</td>
+            <td class="text-danger">{{ m.expenses > 0 ? formatCurrency(m.expenses) : '-' }}</td>
+            <td class="fw-600" [class.text-success]="m.balance >= 0" [class.text-danger]="m.balance < 0">
+              {{ m.incomes > 0 || m.expenses > 0 ? formatCurrency(m.balance) : '-' }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</ng-container>

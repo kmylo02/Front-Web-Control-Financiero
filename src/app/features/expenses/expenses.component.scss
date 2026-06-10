@@ -1,0 +1,13 @@
+.month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 12px 24px;
+
+  .month-label { font-weight: 600; font-size: 16px; min-width: 160px; text-align: center; }
+}
+
+.cat-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }

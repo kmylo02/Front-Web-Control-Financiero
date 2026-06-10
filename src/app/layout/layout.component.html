@@ -1,0 +1,47 @@
+<div class="app-shell" [class.sidebar-collapsed]="!sidebarOpen">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon">💰</span>
+      <span class="logo-text">ControlFin</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a *ngFor="let item of navItems"
+         [routerLink]="item.path"
+         routerLinkActive="active"
+         class="nav-item">
+        <span class="nav-icon">{{ item.icon }}</span>
+        <span class="nav-label">{{ item.label }}</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="avatar">{{ user?.name?.charAt(0)?.toUpperCase() }}</div>
+        <div class="user-details">
+          <span class="user-name">{{ user?.name }}</span>
+          <span class="user-email">{{ user?.email }}</span>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm" (click)="logout()">Salir</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main-area">
+    <header class="app-header">
+      <button class="btn btn-ghost btn-icon" (click)="toggleSidebar()">☰</button>
+      <div class="header-right">
+        <a routerLink="/notifications" class="notif-btn">
+          🔔
+          <span class="notif-badge" *ngIf="(unreadCount$ | async) as count">{{ count }}</span>
+        </a>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

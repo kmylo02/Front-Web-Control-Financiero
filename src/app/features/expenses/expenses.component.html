@@ -1,0 +1,110 @@
+<div class="page-header">
+  <div>
+    <h1>Gastos</h1>
+    <p class="text-muted">Total: <strong class="text-danger">{{ formatCurrency(total) }}</strong></p>
+  </div>
+  <button class="btn btn-primary" (click)="openNew()">+ Nuevo gasto</button>
+</div>
+
+<!-- Navegador de mes -->
+<div class="month-nav card mb-24">
+  <button class="btn btn-ghost btn-icon" (click)="changeMonth(-1)">‹</button>
+  <span class="month-label">{{ monthName }} {{ year }}</span>
+  <button class="btn btn-ghost btn-icon" (click)="changeMonth(1)">›</button>
+</div>
+
+<div *ngIf="loading" class="spinner"></div>
+
+<div *ngIf="!loading" class="card">
+  <div *ngIf="expenses.length; else empty" class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Descripción</th>
+          <th>Categoría</th>
+          <th>Fecha</th>
+          <th>Tipo</th>
+          <th>Monto</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let exp of expenses">
+          <td>
+            <div class="d-flex align-center gap-8">
+              <div class="cat-dot" [style.background]="getCatColor(exp)"></div>
+              {{ exp.description }}
+            </div>
+          </td>
+          <td>{{ getCatName(exp) }}</td>
+          <td>{{ exp.date | date:'d MMM yyyy' }}</td>
+          <td>
+            <span class="badge" [class.badge-primary]="exp.mode==='auto'" [class.badge-info]="exp.mode==='template'" [class.badge-success]="exp.mode==='manual'">
+              {{ exp.mode === 'auto' ? 'Auto' : exp.mode === 'template' ? 'Plantilla' : 'Manual' }}
+            </span>
+          </td>
+          <td class="fw-600 text-danger">{{ formatCurrency(exp.amount) }}</td>
+          <td>
+            <div class="d-flex gap-8 justify-end">
+              <button class="btn btn-ghost btn-icon btn-sm" (click)="openEdit(exp)">✏️</button>
+              <button class="btn btn-ghost btn-icon btn-sm" (click)="delete(exp._id)">🗑️</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <ng-template #empty>
+    <div class="empty-state">
+      <div class="empty-icon">💸</div>
+      <h3>Sin gastos en {{ monthName }}</h3>
+      <p>Registra tu primer gasto del mes</p>
+    </div>
+  </ng-template>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ editingId ? 'Editar gasto' : 'Nuevo gasto' }}</h2>
+      <button class="btn btn-ghost btn-icon" (click)="closeModal()">✕</button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <div class="form-group">
+        <label>Descripción</label>
+        <input formControlName="description" placeholder="Ej: Mercado semanal" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Monto</label>
+          <input type="number" formControlName="amount" placeholder="0" min="1" />
+        </div>
+        <div class="form-group">
+          <label>Fecha</label>
+          <input type="date" formControlName="date" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Categoría</label>
+        <select formControlName="categoryId">
+          <option value="">Selecciona una categoría</option>
+          <option *ngFor="let cat of categories" [value]="cat._id">{{ cat.icon }} {{ cat.name }}</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Notas (opcional)</label>
+        <input formControlName="notes" placeholder="Detalles adicionales..." />
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" (click)="closeModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary" [disabled]="form.invalid || saving">
+          {{ saving ? 'Guardando...' : editingId ? 'Actualizar' : 'Guardar' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
