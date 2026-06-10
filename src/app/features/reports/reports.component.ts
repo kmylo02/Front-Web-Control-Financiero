@@ -1,7 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { NgIf, NgFor } from '@angular/common';
-import { BaseChartDirective } from 'ng2-charts';
-import { ChartData, ChartOptions } from 'chart.js';
 import { Chart, registerables } from 'chart.js';
 import { forkJoin } from 'rxjs';
 import { ReportsService } from '../../core/services/reports.service';
@@ -13,29 +11,24 @@ Chart.register(...registerables);
   selector: 'app-reports',
   templateUrl: './reports.component.html',
   styleUrls: ['./reports.component.scss'],
-  imports: [NgIf, NgFor, BaseChartDirective],
+  imports: [NgIf, NgFor],
 })
-export class ReportsComponent implements OnInit {
-  loading = true;
-  today = new Date();
-  year  = this.today.getFullYear();
-  month = this.today.getMonth() + 1;
+export class ReportsComponent implements OnInit, OnDestroy {
+  @ViewChild('lineCanvas', { static: false }) lineCanvasRef?: ElementRef<HTMLCanvasElement>;
+  @ViewChild('barCanvas',  { static: false }) barCanvasRef?:  ElementRef<HTMLCanvasElement>;
+
+  loading   = true;
+  today     = new Date();
+  year      = this.today.getFullYear();
+  month     = this.today.getMonth() + 1;
   monthName = MONTH_NAMES[this.month - 1];
 
   yearly:     YearlySummary   | null = null;
   comparison: MonthComparison | null = null;
-  yearComp: any = null;
+  yearComp:   any = null;
 
-  lineData: ChartData<'line'> = { labels: [], datasets: [] };
-  lineOptions: ChartOptions<'line'> = {
-    responsive: true, plugins: { legend: { position: 'top' } },
-    scales: { y: { beginAtZero: true } },
-  };
-  barData: ChartData<'bar'> = { labels: [], datasets: [] };
-  barOptions: ChartOptions<'bar'> = {
-    responsive: true, plugins: { legend: { position: 'top' } },
-    scales: { y: { beginAtZero: true } },
-  };
+  private lineChart?: Chart;
+  private barChart?:  Chart;
 
   constructor(private reportsService: ReportsService) {}
 
@@ -47,28 +40,60 @@ export class ReportsComponent implements OnInit {
     }).subscribe({
       next: ({ yearly, comparison, yearComp }) => {
         this.yearly = yearly; this.comparison = comparison; this.yearComp = yearComp;
-        this.buildCharts(yearly, yearComp);
         this.loading = false;
+        setTimeout(() => this.buildCharts(yearly, yearComp), 0);
       },
       error: () => { this.loading = false; },
     });
   }
 
+  ngOnDestroy(): void {
+    this.lineChart?.destroy();
+    this.barChart?.destroy();
+  }
+
   private buildCharts(yearly: YearlySummary, yearComp: any): void {
     const labels = MONTH_NAMES.map(m => m.substring(0, 3));
-    this.lineData = {
-      labels,
-      datasets: [{ label: 'Balance ' + this.year, data: yearly.months.map(m => m.balance),
-        borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,.1)', fill: true, tension: 0.4, pointRadius: 4 }],
-    };
-    if (yearComp?.previousYear) {
-      this.barData = {
-        labels,
-        datasets: [
-          { label: `Gastos ${this.year}`, data: yearly.months.map(m => m.expenses), backgroundColor: '#ef4444', borderRadius: 4 },
-          { label: `Gastos ${this.year - 1}`, data: yearComp.previousYear.months.map((m: any) => m.expenses), backgroundColor: '#fca5a5', borderRadius: 4 },
-        ],
-      };
+
+    if (this.lineCanvasRef) {
+      this.lineChart?.destroy();
+      this.lineChart = new Chart(this.lineCanvasRef.nativeElement, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Balance ' + this.year,
+            data: yearly.months.map(m => m.balance),
+            borderColor: '#6366f1',
+            backgroundColor: 'rgba(99,102,241,.1)',
+            fill: true, tension: 0.4, pointRadius: 4,
+          }],
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'top' } },
+          scales: { y: { beginAtZero: true } },
+        },
+      });
+    }
+
+    if (this.barCanvasRef && yearComp?.previousYear) {
+      this.barChart?.destroy();
+      this.barChart = new Chart(this.barCanvasRef.nativeElement, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            { label: `Gastos ${this.year}`,     data: yearly.months.map(m => m.expenses), backgroundColor: '#ef4444', borderRadius: 4 },
+            { label: `Gastos ${this.year - 1}`, data: yearComp.previousYear.months.map((m: any) => m.expenses), backgroundColor: '#fca5a5', borderRadius: 4 },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'top' } },
+          scales: { y: { beginAtZero: true } },
+        },
+      });
     }
   }
 

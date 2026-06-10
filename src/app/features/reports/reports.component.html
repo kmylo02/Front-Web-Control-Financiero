@@ -80,11 +80,11 @@
   <div class="charts-grid">
     <div class="card">
       <h3 class="section-title">Balance mensual {{ year }}</h3>
-      <canvas baseChart [data]="lineData" [options]="lineOptions" type="line"></canvas>
+      <canvas #lineCanvas></canvas>
     </div>
     <div class="card">
       <h3 class="section-title">Gastos: {{ year }} vs {{ year - 1 }}</h3>
-      <canvas baseChart [data]="barData" [options]="barOptions" type="bar"></canvas>
+      <canvas #barCanvas></canvas>
     </div>
   </div>
 

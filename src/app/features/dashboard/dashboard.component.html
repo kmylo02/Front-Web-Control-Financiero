@@ -50,7 +50,7 @@
     <div class="card">
       <h3 class="card-title">Gastos por categoría</h3>
       <div *ngIf="summary.byCategory?.length; else noData">
-        <canvas baseChart [data]="donutData" [options]="donutOptions" type="doughnut"></canvas>
+        <canvas #donutCanvas></canvas>
       </div>
       <ng-template #noData>
         <div class="empty-state">
@@ -62,7 +62,7 @@
 
     <div class="card">
       <h3 class="card-title">Ingresos vs Gastos {{ year }}</h3>
-      <canvas baseChart [data]="barData" [options]="barOptions" type="bar"></canvas>
+      <canvas #barCanvas></canvas>
     </div>
   </div>
 
