@@ -17,10 +17,11 @@ export class RecurringComponent implements OnInit {
   recurrents: Recurring[]  = [];
   pending:    Recurring[]  = [];
   categories: Category[]   = [];
-  showModal = false;
+  showModal    = false;
   editingId: string | null = null;
-  saving = false;
+  saving       = false;
   activatingId: string | null = null;
+  showQuickCat = false;
   form!: FormGroup;
 
   readonly modes = [
@@ -59,9 +60,15 @@ export class RecurringComponent implements OnInit {
     });
   }
 
-  openNew(): void { this.editingId = null; this.buildForm(); this.showModal = true; }
-  openEdit(r: Recurring): void { this.editingId = r._id; this.buildForm(r); this.showModal = true; }
-  closeModal(): void { this.showModal = false; }
+  openNew(): void { this.editingId = null; this.buildForm(); this.showQuickCat = false; this.showModal = true; }
+  openEdit(r: Recurring): void { this.editingId = r._id; this.buildForm(r); this.showQuickCat = false; this.showModal = true; }
+  closeModal(): void { this.showModal = false; this.showQuickCat = false; }
+  toggleQuickCat(): void { this.showQuickCat = !this.showQuickCat; }
+  createQuickCat(name: string, type: string, input: HTMLInputElement): void {
+    if (!name.trim()) return;
+    this.categoriesService.create({ name: name.trim(), type: type as any, color: '#6366f1', icon: 'receipt' })
+      .subscribe({ next: (cat) => { this.categories = [...this.categories, cat]; this.form.patchValue({ categoryId: cat._id }); this.showQuickCat = false; input.value = ''; } });
+  }
 
   save(): void {
     if (this.form.invalid) return;

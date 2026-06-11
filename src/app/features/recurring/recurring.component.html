@@ -96,6 +96,15 @@
             <option value="">Selecciona</option>
             <option *ngFor="let cat of categories" [value]="cat._id">{{ cat.name }}</option>
           </select>
+          <div class="quick-cat-toggle">
+            <button type="button" class="btn-link" (click)="toggleQuickCat()">
+              {{ showQuickCat ? '✕ Cancelar' : '+ Nueva categoría' }}
+            </button>
+          </div>
+          <div *ngIf="showQuickCat" class="quick-cat-form">
+            <input #quickCatInput placeholder="Nombre de la categoría" (keyup.enter)="createQuickCat(quickCatInput.value, form.value.type || 'expense', quickCatInput)" />
+            <button type="button" class="btn btn-primary btn-sm" (click)="createQuickCat(quickCatInput.value, form.value.type || 'expense', quickCatInput)">Crear</button>
+          </div>
         </div>
       </div>
       <div class="form-group">

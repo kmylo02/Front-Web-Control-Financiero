@@ -16,9 +16,10 @@ export class ExpensesComponent implements OnInit {
   loading = true;
   expenses: Expense[]   = [];
   categories: Category[] = [];
-  showModal = false;
+  showModal    = false;
   editingId: string | null = null;
-  saving = false;
+  saving       = false;
+  showQuickCat = false;
   form!: FormGroup;
 
   today = new Date();
@@ -71,9 +72,15 @@ export class ExpensesComponent implements OnInit {
     this.expensesService.getAll(this.year, this.month).subscribe(data => { this.expenses = data; this.loading = false; });
   }
 
-  openNew(): void    { this.editingId = null; this.buildForm(); this.showModal = true; }
-  openEdit(e: Expense): void { this.editingId = e._id; this.buildForm(e); this.showModal = true; }
-  closeModal(): void { this.showModal = false; }
+  openNew(): void    { this.editingId = null; this.buildForm(); this.showQuickCat = false; this.showModal = true; }
+  openEdit(e: Expense): void { this.editingId = e._id; this.buildForm(e); this.showQuickCat = false; this.showModal = true; }
+  closeModal(): void { this.showModal = false; this.showQuickCat = false; }
+  toggleQuickCat(): void { this.showQuickCat = !this.showQuickCat; }
+  createQuickCat(name: string, input: HTMLInputElement): void {
+    if (!name.trim()) return;
+    this.categoriesService.create({ name: name.trim(), type: 'expense', color: '#6366f1', icon: 'receipt' })
+      .subscribe({ next: (cat) => { this.categories = [...this.categories, cat]; this.form.patchValue({ categoryId: cat._id }); this.showQuickCat = false; input.value = ''; } });
+  }
 
   save(): void {
     if (this.form.invalid) return;
