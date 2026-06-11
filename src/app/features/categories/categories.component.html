@@ -1,0 +1,88 @@
+<div class="page-header">
+  <div>
+    <h1>Categorías</h1>
+    <p class="text-muted">Organiza tus gastos e ingresos</p>
+  </div>
+  <button class="btn btn-primary" (click)="openNew()">+ Nueva categoría</button>
+</div>
+
+<!-- Filtros -->
+<div class="filter-tabs">
+  <button class="filter-btn" [class.active]="filterType==='all'"     (click)="filterType='all'">Todas</button>
+  <button class="filter-btn" [class.active]="filterType==='expense'" (click)="filterType='expense'">Gastos</button>
+  <button class="filter-btn" [class.active]="filterType==='income'"  (click)="filterType='income'">Ingresos</button>
+  <button class="filter-btn" [class.active]="filterType==='both'"    (click)="filterType='both'">Ambos</button>
+</div>
+
+<!-- Formulario -->
+<div *ngIf="showForm" class="card form-card">
+  <h3 class="card-title">{{ editingId ? 'Editar categoría' : 'Nueva categoría' }}</h3>
+
+  <div class="form-group">
+    <label>Nombre</label>
+    <input [(ngModel)]="form.name" placeholder="Ej: Alimentación" class="form-control" />
+  </div>
+
+  <div class="form-group">
+    <label>Tipo</label>
+    <select [(ngModel)]="form.type" class="form-control">
+      <option value="expense">Gasto</option>
+      <option value="income">Ingreso</option>
+      <option value="both">Ambos</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label>Color</label>
+    <div class="color-grid">
+      <button *ngFor="let c of colors"
+              class="color-dot"
+              [style.background]="c"
+              [class.selected]="form.color === c"
+              (click)="form.color = c">
+      </button>
+    </div>
+  </div>
+
+  <div class="preview-row">
+    <div class="cat-preview" [style.background]="form.color + '22'" [style.border-color]="form.color">
+      <span class="cat-dot-lg" [style.background]="form.color"></span>
+      <span class="preview-name">{{ form.name || 'Nombre' }}</span>
+      <span class="badge" [ngClass]="typeClass(form.type)">{{ typeBadge(form.type) }}</span>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button class="btn btn-ghost" (click)="cancel()">Cancelar</button>
+    <button class="btn btn-primary" (click)="save()" [disabled]="saving || !form.name.trim()">
+      {{ saving ? 'Guardando…' : (editingId ? 'Actualizar' : 'Crear') }}
+    </button>
+  </div>
+</div>
+
+<!-- Lista -->
+<div *ngIf="loading" class="spinner"></div>
+
+<div *ngIf="!loading" class="categories-grid">
+  <div *ngIf="filtered.length === 0" class="card empty-state">
+    <div class="empty-icon">🏷️</div>
+    <h3>Sin categorías</h3>
+    <p class="text-muted">Crea tu primera categoría para organizar tus movimientos.</p>
+    <button class="btn btn-primary mt-16" (click)="openNew()">+ Nueva categoría</button>
+  </div>
+
+  <div *ngFor="let cat of filtered" class="category-card card">
+    <div class="cat-left">
+      <div class="cat-dot-lg" [style.background]="cat.color"></div>
+      <div class="cat-info">
+        <span class="cat-name">{{ cat.name }}</span>
+        <span class="badge mt-4" [ngClass]="typeClass(cat.type)">{{ typeBadge(cat.type) }}</span>
+      </div>
+    </div>
+    <div class="cat-actions" *ngIf="!cat.isDefault">
+      <button class="btn btn-ghost btn-sm" (click)="openEdit(cat)">✏️ Editar</button>
+      <button class="btn btn-ghost btn-sm text-danger" (click)="delete(cat)">🗑️</button>
+    </div>
+    <span *ngIf="cat.isDefault" class="badge badge-info">Por defecto</span>
+  </div>
+</div>

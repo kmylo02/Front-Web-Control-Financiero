@@ -37,6 +37,10 @@ export const APP_ROUTES: Routes = [
         path: 'reports',
         loadComponent: () => import('./features/reports/reports.component').then(m => m.ReportsComponent),
       },
+      {
+        path: 'categories',
+        loadComponent: () => import('./features/categories/categories.component').then(m => m.CategoriesComponent),
+      },
     ],
   },
   { path: '**', redirectTo: 'dashboard' },

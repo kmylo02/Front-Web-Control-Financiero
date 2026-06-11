@@ -24,6 +24,7 @@ export class LayoutComponent implements OnInit {
     { path: '/recurring',  label: 'Recurrentes', icon: '🔄' },
     { path: '/budgets',    label: 'Presupuesto', icon: '🎯' },
     { path: '/reports',    label: 'Reportes',    icon: '📈' },
+    { path: '/categories', label: 'Categorías',  icon: '🏷️' },
   ];
 
   constructor(
