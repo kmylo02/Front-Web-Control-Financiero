@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://TU-SERVICIO.onrender.com/api',
+  apiUrl: 'https://control-financiero-api-tva7.onrender.com/api',
 };
