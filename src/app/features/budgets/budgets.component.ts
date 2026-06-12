@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { forkJoin } from 'rxjs';
 import { BudgetsService } from '../../core/services/budgets.service';
 import { ReportsService } from '../../core/services/reports.service';
+import { DialogService } from '../../core/services/dialog.service';
 import { Budget, MonthlySummary, MONTH_NAMES } from '../../core/models';
 
 @Component({
@@ -27,6 +28,7 @@ export class BudgetsComponent implements OnInit {
   constructor(
     private budgetsService: BudgetsService,
     private reportsService: ReportsService,
+    private dialog: DialogService,
     private fb: FormBuilder,
   ) {}
 
@@ -55,8 +57,9 @@ export class BudgetsComponent implements OnInit {
     });
   }
 
-  deleteBudget(): void {
-    if (!confirm('¿Eliminar presupuesto de este mes?')) return;
+  async deleteBudget(): Promise<void> {
+    const ok = await this.dialog.confirm('¿Eliminar presupuesto?', 'Se eliminará el presupuesto de este mes.');
+    if (!ok) return;
     this.budgetsService.delete(this.year, this.month).subscribe(() => this.load());
   }
 

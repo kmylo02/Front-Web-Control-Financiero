@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { forkJoin } from 'rxjs';
 import { IncomesService } from '../../core/services/incomes.service';
 import { CategoriesService } from '../../core/services/categories.service';
+import { DialogService } from '../../core/services/dialog.service';
 import { Income, Category, MONTH_NAMES } from '../../core/models';
 
 @Component({
@@ -32,6 +33,7 @@ export class IncomesComponent implements OnInit {
   constructor(
     private incomesService: IncomesService,
     private categoriesService: CategoriesService,
+    private dialog: DialogService,
     private fb: FormBuilder,
   ) {}
 
@@ -92,8 +94,9 @@ export class IncomesComponent implements OnInit {
     call.subscribe({ next: () => { this.showModal = false; this.saving = false; this.loadIncomes(); }, error: () => { this.saving = false; } });
   }
 
-  delete(id: string): void {
-    if (!confirm('¿Eliminar este ingreso?')) return;
+  async delete(id: string): Promise<void> {
+    const ok = await this.dialog.confirm('¿Eliminar este ingreso?');
+    if (!ok) return;
     this.incomesService.delete(id).subscribe(() => this.loadIncomes());
   }
 

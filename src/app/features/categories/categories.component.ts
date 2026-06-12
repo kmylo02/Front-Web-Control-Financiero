@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { NgFor, NgIf, NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CategoriesService } from '../../core/services/categories.service';
+import { DialogService } from '../../core/services/dialog.service';
 import { Category } from '../../core/models';
 
 const ICONS = ['receipt','home','car','food','health','education','entertainment',
@@ -29,7 +30,7 @@ export class CategoriesComponent implements OnInit {
   icons  = ICONS;
   colors = COLORS;
 
-  constructor(private categoriesService: CategoriesService) {}
+  constructor(private categoriesService: CategoriesService, private dialog: DialogService) {}
 
   ngOnInit(): void { this.load(); }
 
@@ -70,8 +71,9 @@ export class CategoriesComponent implements OnInit {
     });
   }
 
-  delete(cat: Category): void {
-    if (!confirm(`¿Eliminar la categoría "${cat.name}"?`)) return;
+  async delete(cat: Category): Promise<void> {
+    const ok = await this.dialog.confirm(`¿Eliminar categoría?`, `"${cat.name}" será eliminada permanentemente.`);
+    if (!ok) return;
     this.categoriesService.delete(cat._id).subscribe({ next: () => this.load() });
   }
 

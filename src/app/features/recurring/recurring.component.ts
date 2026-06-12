@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { forkJoin } from 'rxjs';
 import { RecurringService } from '../../core/services/recurring.service';
 import { CategoriesService } from '../../core/services/categories.service';
+import { DialogService } from '../../core/services/dialog.service';
 import { Recurring, Category } from '../../core/models';
 
 @Component({
@@ -33,6 +34,7 @@ export class RecurringComponent implements OnInit {
   constructor(
     private recurringService: RecurringService,
     private categoriesService: CategoriesService,
+    private dialog: DialogService,
     private fb: FormBuilder,
   ) {}
 
@@ -88,8 +90,9 @@ export class RecurringComponent implements OnInit {
     });
   }
 
-  delete(id: string): void {
-    if (!confirm('¿Eliminar?')) return;
+  async delete(id: string): Promise<void> {
+    const ok = await this.dialog.confirm('¿Eliminar recurrente?');
+    if (!ok) return;
     this.recurringService.delete(id).subscribe(() => this.reload());
   }
 
