@@ -7,7 +7,8 @@ import { ReportsService } from '../../core/services/reports.service';
 import { ExpensesService } from '../../core/services/expenses.service';
 import { IncomesService } from '../../core/services/incomes.service';
 import { RecurringService } from '../../core/services/recurring.service';
-import { MonthlySummary, Expense, Income, Recurring, MONTH_NAMES } from '../../core/models';
+import { BillItemsService } from '../../core/services/bill-items.service';
+import { MonthlySummary, Expense, Income, Recurring, BillItem, MONTH_NAMES } from '../../core/models';
 
 Chart.register(...registerables);
 
@@ -31,15 +32,44 @@ export class DashboardComponent implements OnInit, OnDestroy {
   recentExpenses:   Expense[]   = [];
   recentIncomes:    Income[]    = [];
   pendingRecurring: Recurring[] = [];
+  agendaBills:      BillItem[]  = [];
+
+  get agendaPending()      { return this.agendaBills.filter(b => b.status === 'pending'); }
+  get agendaPaid()         { return this.agendaBills.filter(b => b.status === 'paid'); }
+  get agendaTotalPending() { return this.agendaPending.reduce((s, b) => s + b.amount, 0); }
+  get agendaTotalPaid()    { return this.agendaPaid.reduce((s, b) => s + b.amount, 0); }
+  get agendaTotal()        { return this.agendaBills.reduce((s, b) => s + b.amount, 0); }
+  get agendaPercent()      { return this.agendaTotal > 0 ? Math.round((this.agendaTotalPaid / this.agendaTotal) * 100) : 0; }
+
+  get agendaSorted(): BillItem[] {
+    const pending = this.agendaPending.slice().sort((a, b) => a.dueDay - b.dueDay);
+    const paid    = this.agendaPaid.slice().sort((a, b) => a.dueDay - b.dueDay);
+    return [...pending, ...paid];
+  }
+
+  isOverdue(bill: BillItem): boolean {
+    return bill.status === 'pending'
+      && this.year === this.today.getFullYear()
+      && this.month === this.today.getMonth() + 1
+      && bill.dueDay < this.today.getDate();
+  }
+
+  isDueToday(bill: BillItem): boolean {
+    return bill.status === 'pending'
+      && this.year === this.today.getFullYear()
+      && this.month === this.today.getMonth() + 1
+      && bill.dueDay === this.today.getDate();
+  }
 
   private donutChart?: Chart;
   private barChart?:   Chart;
 
   constructor(
-    private reportsService: ReportsService,
+    private reportsService:  ReportsService,
     private expensesService: ExpensesService,
     private incomesService:  IncomesService,
     private recurringService: RecurringService,
+    private billItemsService: BillItemsService,
   ) {}
 
   ngOnInit(): void {
@@ -49,12 +79,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
       incomes:  this.incomesService.getAll(this.year, this.month),
       pending:  this.recurringService.getPending(),
       yearly:   this.reportsService.getYearly(this.year),
+      bills:    this.billItemsService.getByMonth(this.year, this.month),
     }).subscribe({
-      next: ({ summary, expenses, incomes, pending, yearly }) => {
+      next: ({ summary, expenses, incomes, pending, yearly, bills }) => {
         this.summary          = summary;
         this.recentExpenses   = expenses.slice(0, 5);
         this.recentIncomes    = incomes.slice(0, 5);
         this.pendingRecurring = pending;
+        this.agendaBills      = bills;
         this.loading = false;
 
         // Let Angular render the *ngIf blocks before drawing charts
@@ -112,6 +144,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
     });
   }
+
+  toggleBill(bill: BillItem): void {
+    this.billItemsService.toggle(bill._id).subscribe(() => {
+      this.billItemsService.getByMonth(this.year, this.month)
+        .subscribe(bills => { this.agendaBills = bills; });
+    });
+  }
+
+  billCatColor(b: BillItem): string { return typeof b.categoryId === 'object' ? (b.categoryId as any).color : '#6366f1'; }
+  billCatName(b: BillItem): string  { return typeof b.categoryId === 'object' ? (b.categoryId as any).name  : ''; }
 
   formatCurrency(val: number): string {
     return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(val);
