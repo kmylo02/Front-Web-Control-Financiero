@@ -1,0 +1,166 @@
+<div class="page-header">
+  <div>
+    <h1>Agenda de Pagos</h1>
+    <p class="text-muted">Controla tus compromisos mensuales</p>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-ghost btn-sm" (click)="copyToNextMonth()" title="Copiar recurrentes al siguiente mes">↗ Copiar recurrentes</button>
+    <button class="btn btn-primary" (click)="openNew()">+ Agregar pago</button>
+  </div>
+</div>
+
+<!-- Navegación mes -->
+<div class="month-nav">
+  <button class="btn btn-ghost btn-icon" (click)="changeMonth(-1)">‹</button>
+  <span class="month-label">{{ monthName }} {{ year }}</span>
+  <button class="btn btn-ghost btn-icon" (click)="changeMonth(1)">›</button>
+</div>
+
+<!-- Resumen -->
+<div class="summary-cards" *ngIf="!loading">
+  <div class="summary-card card">
+    <span class="summary-label">Total mes</span>
+    <span class="summary-amount">{{ formatCurrency(totalAll) }}</span>
+  </div>
+  <div class="summary-card card text-danger">
+    <span class="summary-label">Pendiente</span>
+    <span class="summary-amount">{{ formatCurrency(totalPending) }}</span>
+    <span class="summary-count">{{ pending.length }} pagos</span>
+  </div>
+  <div class="summary-card card text-success">
+    <span class="summary-label">Pagado</span>
+    <span class="summary-amount">{{ formatCurrency(totalPaid) }}</span>
+    <span class="summary-count">{{ paid.length }} pagos</span>
+  </div>
+  <div class="summary-card card progress-card">
+    <span class="summary-label">Progreso</span>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar" [style.width.%]="paidPercent"></div>
+    </div>
+    <span class="summary-count">{{ paidPercent }}% completado</span>
+  </div>
+</div>
+
+<!-- Lista -->
+<div *ngIf="loading" class="spinner"></div>
+
+<div *ngIf="!loading && bills.length === 0" class="card empty-state">
+  <div class="empty-icon">📅</div>
+  <h3>Sin pagos este mes</h3>
+  <p class="text-muted">Agrega tus compromisos de pago para llevar el control.</p>
+  <button class="btn btn-primary mt-16" (click)="openNew()">+ Agregar pago</button>
+</div>
+
+<div *ngIf="!loading && bills.length > 0" class="bills-list">
+
+  <!-- Pendientes -->
+  <div *ngIf="pending.length > 0">
+    <h3 class="section-title">Pendientes</h3>
+    <div *ngFor="let bill of pending"
+         class="bill-card card"
+         [class.overdue]="isOverdue(bill)"
+         [class.due-today]="isDueToday(bill)">
+      <div class="bill-day">
+        <span class="day-number">{{ bill.dueDay }}</span>
+        <span class="day-label">{{ isOverdue(bill) ? 'Vencido' : isDueToday(bill) ? 'Hoy' : 'día' }}</span>
+      </div>
+      <div class="bill-info">
+        <div class="bill-name">
+          <span class="cat-dot" *ngIf="bill.categoryId" [style.background]="catColor(bill)"></span>
+          {{ bill.name }}
+          <span class="badge badge-info" *ngIf="bill.isRecurring">🔄</span>
+        </div>
+        <div class="bill-meta">
+          <span *ngIf="bill.categoryId" class="text-muted">{{ catName(bill) }}</span>
+          <span *ngIf="bill.notes" class="text-muted"> · {{ bill.notes }}</span>
+        </div>
+      </div>
+      <div class="bill-amount">{{ formatCurrency(bill.amount) }}</div>
+      <div class="bill-actions">
+        <button class="btn btn-success btn-sm" (click)="toggle(bill)" title="Marcar como pagado">✓ Pagar</button>
+        <button class="btn btn-ghost btn-sm" (click)="openEdit(bill)">✏️</button>
+        <button class="btn btn-ghost btn-sm text-danger" (click)="delete(bill)">🗑️</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagados -->
+  <div *ngIf="paid.length > 0">
+    <h3 class="section-title paid-title">Pagados</h3>
+    <div *ngFor="let bill of paid" class="bill-card card paid">
+      <div class="bill-day">
+        <span class="day-number">{{ bill.dueDay }}</span>
+        <span class="day-label">día</span>
+      </div>
+      <div class="bill-info">
+        <div class="bill-name">
+          <span class="cat-dot" *ngIf="bill.categoryId" [style.background]="catColor(bill)"></span>
+          {{ bill.name }}
+          <span class="badge badge-info" *ngIf="bill.isRecurring">🔄</span>
+        </div>
+        <div class="bill-meta">
+          <span *ngIf="bill.categoryId" class="text-muted">{{ catName(bill) }}</span>
+        </div>
+      </div>
+      <div class="bill-amount">{{ formatCurrency(bill.amount) }}</div>
+      <div class="bill-actions">
+        <button class="btn btn-ghost btn-sm" (click)="toggle(bill)" title="Marcar como pendiente">↩ Deshacer</button>
+        <button class="btn btn-ghost btn-sm" (click)="openEdit(bill)">✏️</button>
+        <button class="btn btn-ghost btn-sm text-danger" (click)="delete(bill)">🗑️</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal -->
+<div *ngIf="showModal" class="modal-backdrop" (click)="closeModal()"></div>
+<div *ngIf="showModal" class="modal-panel">
+  <div class="modal-header">
+    <h2 class="modal-title">{{ editingId ? 'Editar pago' : 'Nuevo pago' }}</h2>
+    <button class="btn btn-ghost btn-icon" (click)="closeModal()">✕</button>
+  </div>
+
+  <form [formGroup]="form" class="modal-body">
+    <div class="form-group">
+      <label>Nombre del pago *</label>
+      <input formControlName="name" class="form-control" placeholder="Ej: Arriendo, Netflix, Gym…" />
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Monto *</label>
+        <input formControlName="amount" type="number" class="form-control" placeholder="0" />
+      </div>
+      <div class="form-group">
+        <label>Día de pago *</label>
+        <input formControlName="dueDay" type="number" min="1" max="31" class="form-control" placeholder="1-31" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Categoría</label>
+      <select formControlName="categoryId" class="form-control">
+        <option value="">— Sin categoría —</option>
+        <option *ngFor="let cat of categories" [value]="cat._id">{{ cat.name }}</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Notas</label>
+      <input formControlName="notes" class="form-control" placeholder="Opcional" />
+    </div>
+
+    <div class="form-check">
+      <input type="checkbox" formControlName="isRecurring" id="isRecurring" />
+      <label for="isRecurring">🔄 Pago recurrente (se copia al siguiente mes)</label>
+    </div>
+  </form>
+
+  <div class="modal-footer">
+    <button class="btn btn-ghost" (click)="closeModal()">Cancelar</button>
+    <button class="btn btn-primary" (click)="save()" [disabled]="form.invalid || saving">
+      {{ saving ? 'Guardando…' : (editingId ? 'Actualizar' : 'Agregar') }}
+    </button>
+  </div>
+</div>

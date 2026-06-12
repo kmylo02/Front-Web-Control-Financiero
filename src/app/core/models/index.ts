@@ -125,6 +125,20 @@ export interface Notification {
   createdAt: string;
 }
 
+export interface BillItem {
+  _id: string;
+  name: string;
+  amount: number;
+  categoryId?: Category | string;
+  dueDay: number;
+  year: number;
+  month: number;
+  status: 'pending' | 'paid';
+  paidAt?: string;
+  isRecurring: boolean;
+  notes: string;
+}
+
 export const MONTH_NAMES = [
   'Enero','Febrero','Marzo','Abril','Mayo','Junio',
   'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'

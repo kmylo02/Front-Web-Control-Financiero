@@ -41,6 +41,10 @@ export const APP_ROUTES: Routes = [
         path: 'categories',
         loadComponent: () => import('./features/categories/categories.component').then(m => m.CategoriesComponent),
       },
+      {
+        path: 'agenda',
+        loadComponent: () => import('./features/agenda/agenda.component').then(m => m.AgendaComponent),
+      },
     ],
   },
   { path: '**', redirectTo: 'dashboard' },

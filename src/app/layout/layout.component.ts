@@ -25,6 +25,7 @@ export class LayoutComponent implements OnInit {
     { path: '/budgets',    label: 'Presupuesto', icon: '🎯' },
     { path: '/reports',    label: 'Reportes',    icon: '📈' },
     { path: '/categories', label: 'Categorías',  icon: '🏷️' },
+    { path: '/agenda',     label: 'Agenda',       icon: '📅' },
   ];
 
   constructor(
