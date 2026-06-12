@@ -38,11 +38,10 @@ export class RecurringComponent implements OnInit {
 
   get monthLabel() { return `${this.MONTH_NAMES[this.currentMonth - 1]} ${this.currentYear}`; }
 
-  // KPI getters
-  get billsAll()          { return this.recurringBills; }
-  get billsPendingList()  { return this.recurringBills.filter(b => b.status === 'pending'); }
-  get billsPaidList()     { return this.recurringBills.filter(b => b.status === 'paid'); }
-  get billsTotal()        { return this.recurringBills.reduce((s, b) => s + b.amount, 0); }
+  // KPI getters — react to dayFilter via filteredBills
+  get billsPendingList()  { return this.filteredBills.filter(b => b.status === 'pending'); }
+  get billsPaidList()     { return this.filteredBills.filter(b => b.status === 'paid'); }
+  get billsTotal()        { return this.filteredBills.reduce((s, b) => s + b.amount, 0); }
   get billsTotalPending() { return this.billsPendingList.reduce((s, b) => s + b.amount, 0); }
   get billsTotalPaid()    { return this.billsPaidList.reduce((s, b) => s + b.amount, 0); }
   get billsPercent()      { return this.billsTotal > 0 ? Math.round((this.billsTotalPaid / this.billsTotal) * 100) : 0; }
