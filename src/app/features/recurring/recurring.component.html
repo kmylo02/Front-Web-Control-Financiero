@@ -69,6 +69,37 @@
   </ng-template>
 </div>
 
+<!-- Recurrentes de la Agenda -->
+<div *ngIf="!loading && recurringBills.length > 0" class="card mt-24">
+  <h3 class="section-title">📅 Pagos recurrentes de la Agenda — {{ currentMonth }}/{{ currentYear }}</h3>
+  <table>
+    <thead>
+      <tr><th>Nombre</th><th>Categoría</th><th>Día</th><th>Estado</th><th>Monto</th><th></th></tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let bill of recurringBills">
+        <td class="fw-600">
+          <span class="cat-dot" [style.background]="billCatColor(bill)"></span>
+          {{ bill.name }}
+        </td>
+        <td>{{ billCatName(bill) }}</td>
+        <td>Día {{ bill.dueDay }}</td>
+        <td>
+          <span class="badge" [class.badge-success]="bill.status==='paid'" [class.badge-warning]="bill.status==='pending'">
+            {{ bill.status === 'paid' ? 'Pagado' : 'Pendiente' }}
+          </span>
+        </td>
+        <td class="fw-600">{{ formatCurrency(bill.amount) }}</td>
+        <td>
+          <button class="btn btn-ghost btn-sm" (click)="toggleBill(bill)" [title]="bill.status === 'paid' ? 'Marcar pendiente' : 'Marcar pagado'">
+            {{ bill.status === 'paid' ? '↩' : '✓ Pagar' }}
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
 <!-- Modal -->
 <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
   <div class="modal" (click)="$event.stopPropagation()">

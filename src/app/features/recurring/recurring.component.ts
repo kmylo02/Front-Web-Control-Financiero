@@ -4,8 +4,9 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { forkJoin } from 'rxjs';
 import { RecurringService } from '../../core/services/recurring.service';
 import { CategoriesService } from '../../core/services/categories.service';
+import { BillItemsService } from '../../core/services/bill-items.service';
 import { DialogService } from '../../core/services/dialog.service';
-import { Recurring, Category } from '../../core/models';
+import { Recurring, Category, BillItem } from '../../core/models';
 
 @Component({
   selector: 'app-recurring',
@@ -18,6 +19,11 @@ export class RecurringComponent implements OnInit {
   recurrents: Recurring[]  = [];
   pending:    Recurring[]  = [];
   categories: Category[]   = [];
+  recurringBills: BillItem[] = [];
+
+  today = new Date();
+  currentYear  = this.today.getFullYear();
+  currentMonth = this.today.getMonth() + 1;
   showModal    = false;
   editingId: string | null = null;
   saving       = false;
@@ -34,6 +40,7 @@ export class RecurringComponent implements OnInit {
   constructor(
     private recurringService: RecurringService,
     private categoriesService: CategoriesService,
+    private billItemsService: BillItemsService,
     private dialog: DialogService,
     private fb: FormBuilder,
   ) {}
@@ -44,8 +51,13 @@ export class RecurringComponent implements OnInit {
       all:     this.recurringService.getAll(),
       pending: this.recurringService.getPending(),
       cats:    this.categoriesService.getAll(),
-    }).subscribe(({ all, pending, cats }) => {
-      this.recurrents = all; this.pending = pending; this.categories = cats; this.loading = false;
+      bills:   this.billItemsService.getByMonth(this.currentYear, this.currentMonth),
+    }).subscribe(({ all, pending, cats, bills }) => {
+      this.recurrents     = all;
+      this.pending        = pending;
+      this.categories     = cats;
+      this.recurringBills = bills.filter(b => b.isRecurring);
+      this.loading        = false;
     });
   }
 
@@ -97,11 +109,28 @@ export class RecurringComponent implements OnInit {
   }
 
   private reload(): void {
-    forkJoin({ all: this.recurringService.getAll(), pending: this.recurringService.getPending() })
-      .subscribe(({ all, pending }) => { this.recurrents = all; this.pending = pending; });
+    forkJoin({
+      all:     this.recurringService.getAll(),
+      pending: this.recurringService.getPending(),
+      bills:   this.billItemsService.getByMonth(this.currentYear, this.currentMonth),
+    }).subscribe(({ all, pending, bills }) => {
+      this.recurrents     = all;
+      this.pending        = pending;
+      this.recurringBills = bills.filter(b => b.isRecurring);
+    });
   }
 
   getCatName(r: Recurring): string { return typeof r.categoryId === 'object' ? (r.categoryId as any).name : ''; }
+
+  billCatName(b: BillItem): string  { return typeof b.categoryId === 'object' ? (b.categoryId as any).name : ''; }
+  billCatColor(b: BillItem): string { return typeof b.categoryId === 'object' ? (b.categoryId as any).color : '#6366f1'; }
+
+  toggleBill(b: BillItem): void {
+    this.billItemsService.toggle(b._id).subscribe(() => {
+      this.billItemsService.getByMonth(this.currentYear, this.currentMonth)
+        .subscribe(bills => { this.recurringBills = bills.filter(x => x.isRecurring); });
+    });
+  }
   modeLabel(mode: string): string  { return this.modes.find(m => m.value === mode)?.label ?? mode; }
   formatCurrency(val: number): string {
     return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(val);
