@@ -69,35 +69,93 @@
   </ng-template>
 </div>
 
-<!-- Recurrentes de la Agenda -->
-<div *ngIf="!loading && recurringBills.length > 0" class="card mt-24">
-  <h3 class="section-title">📅 Pagos recurrentes de la Agenda — {{ currentMonth }}/{{ currentYear }}</h3>
-  <table>
-    <thead>
-      <tr><th>Nombre</th><th>Categoría</th><th>Día</th><th>Estado</th><th>Monto</th><th></th></tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let bill of recurringBills">
-        <td class="fw-600">
-          <span class="cat-dot" [style.background]="billCatColor(bill)"></span>
-          {{ bill.name }}
-        </td>
-        <td>{{ billCatName(bill) }}</td>
-        <td>Día {{ bill.dueDay }}</td>
-        <td>
-          <span class="badge" [class.badge-success]="bill.status==='paid'" [class.badge-warning]="bill.status==='pending'">
-            {{ bill.status === 'paid' ? 'Pagado' : 'Pendiente' }}
-          </span>
-        </td>
-        <td class="fw-600">{{ formatCurrency(bill.amount) }}</td>
-        <td>
-          <button class="btn btn-ghost btn-sm" (click)="toggleBill(bill)" [title]="bill.status === 'paid' ? 'Marcar pendiente' : 'Marcar pagado'">
-            {{ bill.status === 'paid' ? '↩' : '✓ Pagar' }}
-          </button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+<!-- ── Agenda de pagos recurrentes ── -->
+<div class="agenda-section">
+
+  <!-- Navegación de mes -->
+  <div class="month-nav">
+    <button class="btn btn-ghost btn-icon" (click)="changeMonth(-1)">‹</button>
+    <span class="month-label">{{ monthLabel }}</span>
+    <button class="btn btn-ghost btn-icon" (click)="changeMonth(1)">›</button>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="agenda-kpis">
+    <div class="kpi-card">
+      <span class="kpi-label">Total mes</span>
+      <span class="kpi-value">{{ formatCurrency(billsTotal) }}</span>
+    </div>
+    <div class="kpi-card kpi-pending">
+      <span class="kpi-label">Pendiente</span>
+      <span class="kpi-value text-danger">{{ formatCurrency(billsTotalPending) }}</span>
+      <span class="kpi-sub">{{ billsPendingList.length }} pagos</span>
+    </div>
+    <div class="kpi-card kpi-paid">
+      <span class="kpi-label">Pagado</span>
+      <span class="kpi-value text-success">{{ formatCurrency(billsTotalPaid) }}</span>
+      <span class="kpi-sub">{{ billsPaidList.length }} pagos</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">Progreso</span>
+      <div class="kpi-bar">
+        <div class="kpi-bar-fill" [style.width.%]="billsPercent"></div>
+      </div>
+      <span class="kpi-sub">{{ billsPercent }}% completado</span>
+    </div>
+  </div>
+
+  <!-- Filtro por día -->
+  <div *ngIf="activeDays.length > 0" class="day-filters">
+    <button class="day-chip" [class.active]="dayFilter === null" (click)="dayFilter = null">Todos</button>
+    <button *ngFor="let d of activeDays"
+            class="day-chip"
+            [class.active]="dayFilter === d"
+            (click)="dayFilter = d">
+      Día {{ d }}
+    </button>
+  </div>
+
+  <!-- Lista filtrada -->
+  <div *ngIf="filteredBills.length > 0" class="bills-list">
+    <div *ngFor="let bill of filteredBills"
+         class="bill-row"
+         [class.bill-paid]="bill.status === 'paid'"
+         [class.bill-overdue]="isOverdue(bill)"
+         [class.bill-today]="isDueToday(bill)">
+      <div class="bill-day-col">
+        <span class="bill-day-num">{{ bill.dueDay }}</span>
+        <span class="bill-day-tag"
+              [class.tag-overdue]="isOverdue(bill)"
+              [class.tag-today]="isDueToday(bill)"
+              [class.tag-ok]="bill.status === 'paid'">
+          {{ isOverdue(bill) ? 'Venc.' : isDueToday(bill) ? 'Hoy' : bill.status === 'paid' ? 'OK' : 'día' }}
+        </span>
+      </div>
+      <span class="bill-dot" [style.background]="billCatColor(bill)"></span>
+      <div class="bill-info">
+        <span class="bill-name">{{ bill.name }}</span>
+        <span class="bill-cat text-muted">{{ billCatName(bill) }}</span>
+      </div>
+      <span class="bill-status badge"
+            [class.badge-warning]="bill.status==='pending'"
+            [class.badge-success]="bill.status==='paid'">
+        {{ bill.status === 'paid' ? 'Pagado' : 'Pendiente' }}
+      </span>
+      <span class="bill-amount fw-600">{{ formatCurrency(bill.amount) }}</span>
+      <button class="btn btn-sm"
+              [class.btn-success]="bill.status === 'pending'"
+              [class.btn-ghost]="bill.status === 'paid'"
+              (click)="toggleBill(bill)">
+        {{ bill.status === 'paid' ? '↩' : '✓ Pagar' }}
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && recurringBills.length === 0" class="empty-agenda">
+    <span>Sin pagos recurrentes agendados para este mes.</span>
+    <a routerLink="/agenda" class="btn btn-ghost btn-sm">Ir a Agenda →</a>
+  </div>
+
 </div>
 
 <!-- Modal -->

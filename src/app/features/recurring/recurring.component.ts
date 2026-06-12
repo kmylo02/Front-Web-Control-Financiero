@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { NgIf, NgFor } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { RecurringService } from '../../core/services/recurring.service';
@@ -12,7 +13,7 @@ import { Recurring, Category, BillItem } from '../../core/models';
   selector: 'app-recurring',
   templateUrl: './recurring.component.html',
   styleUrls: ['./recurring.component.scss'],
-  imports: [NgIf, NgFor, ReactiveFormsModule],
+  imports: [NgIf, NgFor, RouterLink, ReactiveFormsModule],
 })
 export class RecurringComponent implements OnInit {
   loading = true;
@@ -20,8 +21,9 @@ export class RecurringComponent implements OnInit {
   pending:    Recurring[]  = [];
   categories: Category[]   = [];
   recurringBills: BillItem[] = [];
+  dayFilter: number | null  = null;
 
-  today = new Date();
+  today        = new Date();
   currentYear  = this.today.getFullYear();
   currentMonth = this.today.getMonth() + 1;
   showModal    = false;
@@ -30,6 +32,49 @@ export class RecurringComponent implements OnInit {
   activatingId: string | null = null;
   showQuickCat = false;
   form!: FormGroup;
+
+  readonly MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+    'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+  get monthLabel() { return `${this.MONTH_NAMES[this.currentMonth - 1]} ${this.currentYear}`; }
+
+  // KPI getters
+  get billsAll()          { return this.recurringBills; }
+  get billsPendingList()  { return this.recurringBills.filter(b => b.status === 'pending'); }
+  get billsPaidList()     { return this.recurringBills.filter(b => b.status === 'paid'); }
+  get billsTotal()        { return this.recurringBills.reduce((s, b) => s + b.amount, 0); }
+  get billsTotalPending() { return this.billsPendingList.reduce((s, b) => s + b.amount, 0); }
+  get billsTotalPaid()    { return this.billsPaidList.reduce((s, b) => s + b.amount, 0); }
+  get billsPercent()      { return this.billsTotal > 0 ? Math.round((this.billsTotalPaid / this.billsTotal) * 100) : 0; }
+
+  // Unique sorted days that have bills
+  get activeDays(): number[] {
+    return [...new Set(this.recurringBills.map(b => b.dueDay))].sort((a, b) => a - b);
+  }
+
+  // Bills filtered by selected day, sorted pending-first then by dueDay
+  get filteredBills(): BillItem[] {
+    const list = this.dayFilter !== null
+      ? this.recurringBills.filter(b => b.dueDay === this.dayFilter)
+      : this.recurringBills;
+    const pending = list.filter(b => b.status === 'pending').sort((a, b) => a.dueDay - b.dueDay);
+    const paid    = list.filter(b => b.status === 'paid').sort((a, b) => a.dueDay - b.dueDay);
+    return [...pending, ...paid];
+  }
+
+  isOverdue(b: BillItem): boolean {
+    return b.status === 'pending'
+      && this.currentYear  === this.today.getFullYear()
+      && this.currentMonth === this.today.getMonth() + 1
+      && b.dueDay < this.today.getDate();
+  }
+
+  isDueToday(b: BillItem): boolean {
+    return b.status === 'pending'
+      && this.currentYear  === this.today.getFullYear()
+      && this.currentMonth === this.today.getMonth() + 1
+      && b.dueDay === this.today.getDate();
+  }
 
   readonly modes = [
     { value: 'auto',     label: 'Automático', desc: 'Se genera solo el día 1 de cada mes' },
@@ -74,6 +119,19 @@ export class RecurringComponent implements OnInit {
     });
   }
 
+  changeMonth(dir: number): void {
+    this.currentMonth += dir;
+    if (this.currentMonth > 12) { this.currentMonth = 1; this.currentYear++; }
+    if (this.currentMonth < 1)  { this.currentMonth = 12; this.currentYear--; }
+    this.dayFilter = null;
+    this.loadBills();
+  }
+
+  private loadBills(): void {
+    this.billItemsService.getByMonth(this.currentYear, this.currentMonth)
+      .subscribe(bills => { this.recurringBills = bills.filter(b => b.isRecurring); });
+  }
+
   openNew(): void { this.editingId = null; this.buildForm(); this.showQuickCat = false; this.showModal = true; }
   openEdit(r: Recurring): void { this.editingId = r._id; this.buildForm(r); this.showQuickCat = false; this.showModal = true; }
   closeModal(): void { this.showModal = false; this.showQuickCat = false; }
@@ -112,11 +170,10 @@ export class RecurringComponent implements OnInit {
     forkJoin({
       all:     this.recurringService.getAll(),
       pending: this.recurringService.getPending(),
-      bills:   this.billItemsService.getByMonth(this.currentYear, this.currentMonth),
-    }).subscribe(({ all, pending, bills }) => {
-      this.recurrents     = all;
-      this.pending        = pending;
-      this.recurringBills = bills.filter(b => b.isRecurring);
+    }).subscribe(({ all, pending }) => {
+      this.recurrents = all;
+      this.pending    = pending;
+      this.loadBills();
     });
   }
 
@@ -126,10 +183,7 @@ export class RecurringComponent implements OnInit {
   billCatColor(b: BillItem): string { return typeof b.categoryId === 'object' ? (b.categoryId as any).color : '#6366f1'; }
 
   toggleBill(b: BillItem): void {
-    this.billItemsService.toggle(b._id).subscribe(() => {
-      this.billItemsService.getByMonth(this.currentYear, this.currentMonth)
-        .subscribe(bills => { this.recurringBills = bills.filter(x => x.isRecurring); });
-    });
+    this.billItemsService.toggle(b._id).subscribe(() => this.loadBills());
   }
   modeLabel(mode: string): string  { return this.modes.find(m => m.value === mode)?.label ?? mode; }
   formatCurrency(val: number): string {
