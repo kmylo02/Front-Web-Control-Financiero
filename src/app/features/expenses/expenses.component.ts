@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { NgIf, NgFor, DatePipe } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { ExpensesService } from '../../core/services/expenses.service';
 import { CategoriesService } from '../../core/services/categories.service';
@@ -11,7 +11,7 @@ import { Expense, Category, MONTH_NAMES } from '../../core/models';
   selector: 'app-expenses',
   templateUrl: './expenses.component.html',
   styleUrls: ['./expenses.component.scss'],
-  imports: [NgIf, NgFor, DatePipe, ReactiveFormsModule],
+  imports: [NgIf, NgFor, DatePipe, ReactiveFormsModule, FormsModule],
 })
 export class ExpensesComponent implements OnInit {
   loading = true;
@@ -23,12 +23,29 @@ export class ExpensesComponent implements OnInit {
   showQuickCat = false;
   form!: FormGroup;
 
+  searchText = '';
+  sortBy: 'date-desc' | 'date-asc' | 'amount-desc' | 'amount-asc' = 'date-desc';
+
   today = new Date();
   year  = this.today.getFullYear();
   month = this.today.getMonth() + 1;
 
   get monthName() { return MONTH_NAMES[this.month - 1]; }
-  get total()     { return this.expenses.reduce((s, e) => s + e.amount, 0); }
+
+  get filtered(): Expense[] {
+    let list = this.searchText.trim()
+      ? this.expenses.filter(e => e.description.toLowerCase().includes(this.searchText.toLowerCase()))
+      : [...this.expenses];
+    switch (this.sortBy) {
+      case 'date-desc':   list.sort((a, b) => b.date.localeCompare(a.date)); break;
+      case 'date-asc':    list.sort((a, b) => a.date.localeCompare(b.date)); break;
+      case 'amount-desc': list.sort((a, b) => b.amount - a.amount); break;
+      case 'amount-asc':  list.sort((a, b) => a.amount - b.amount); break;
+    }
+    return list;
+  }
+
+  get total() { return this.filtered.reduce((s, e) => s + e.amount, 0); }
 
   constructor(
     private expensesService: ExpensesService,
@@ -51,8 +68,8 @@ export class ExpensesComponent implements OnInit {
 
   private buildForm(exp?: Expense): void {
     const dateStr = exp?.date
-      ? new Date(exp.date).toISOString().split('T')[0]
-      : new Date().toISOString().split('T')[0];
+      ? (exp.date as string).substring(0, 10)
+      : this.todayLocal();
     this.form = this.fb.group({
       amount:      [exp?.amount ?? '', [Validators.required, Validators.min(1)]],
       description: [exp?.description ?? '', Validators.required],
@@ -104,5 +121,10 @@ export class ExpensesComponent implements OnInit {
   getCatColor(exp: Expense): string { return typeof exp.categoryId === 'object' ? (exp.categoryId as any).color : '#6366f1'; }
   formatCurrency(val: number): string {
     return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(val);
+  }
+
+  private todayLocal(): string {
+    const t = new Date();
+    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
   }
 }
