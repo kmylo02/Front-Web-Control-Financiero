@@ -54,6 +54,37 @@
 
 .tx-amount { font-weight: 600; font-size: 13px; white-space: nowrap; }
 
+// Desglose en KPI card de gastos
+.stat-breakdown {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.breakdown-chip {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+.breakdown-plus {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.agenda-chip {
+  border-color: #fca5a5;
+  color: #b91c1c;
+  background: #fff1f2;
+}
+
 .agenda-pending-card { border-left: 3px solid var(--danger); }
 .agenda-paid-card    { border-left: 3px solid var(--success); }
 

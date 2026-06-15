@@ -41,6 +41,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   get agendaTotal()        { return this.agendaBills.reduce((s, b) => s + b.amount, 0); }
   get agendaPercent()      { return this.agendaTotal > 0 ? Math.round((this.agendaTotalPaid / this.agendaTotal) * 100) : 0; }
 
+  // Balance combinado: gastos regulares + agenda pagada
+  get totalGastado()      { return (this.summary?.totalExpenses ?? 0) + this.agendaTotalPaid; }
+  get balance()           { return (this.summary?.totalIncomes ?? 0) - this.totalGastado; }
+  get balanceProyectado() { return this.balance - this.agendaTotalPending; }
+
   get agendaSorted(): BillItem[] {
     const pending = this.agendaPending.slice().sort((a, b) => a.dueDay - b.dueDay);
     const paid    = this.agendaPaid.slice().sort((a, b) => a.dueDay - b.dueDay);

@@ -23,16 +23,30 @@
       <div class="stat-label">Ingresos del mes</div>
       <div class="stat-value text-success">{{ formatCurrency(summary.totalIncomes) }}</div>
     </div>
+
     <div class="stat-card">
-      <div class="stat-label">Gastos del mes</div>
-      <div class="stat-value text-danger">{{ formatCurrency(summary.totalExpenses) }}</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Balance</div>
-      <div class="stat-value" [class.text-success]="summary.balance >= 0" [class.text-danger]="summary.balance < 0">
-        {{ formatCurrency(summary.balance) }}
+      <div class="stat-label">Gastos totales</div>
+      <div class="stat-value text-danger">{{ formatCurrency(totalGastado) }}</div>
+      <div class="stat-breakdown">
+        <span class="breakdown-chip">Regulares: {{ formatCurrency(summary.totalExpenses) }}</span>
+        <span class="breakdown-plus">+</span>
+        <span class="breakdown-chip agenda-chip">Agenda: {{ formatCurrency(agendaTotalPaid) }}</span>
       </div>
     </div>
+
+    <div class="stat-card">
+      <div class="stat-label">Balance disponible</div>
+      <div class="stat-value" [class.text-success]="balance >= 0" [class.text-danger]="balance < 0">
+        {{ formatCurrency(balance) }}
+      </div>
+      <div class="stat-change" *ngIf="agendaTotalPending > 0">
+        <span class="text-muted">Si paga todo: </span>
+        <span [class.text-success]="balanceProyectado >= 0" [class.text-danger]="balanceProyectado < 0">
+          {{ formatCurrency(balanceProyectado) }}
+        </span>
+      </div>
+    </div>
+
     <div class="stat-card" *ngIf="summary.budget.budget">
       <div class="stat-label">Presupuesto</div>
       <div class="stat-value">{{ usagePercent }}%</div>
