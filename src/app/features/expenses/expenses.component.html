@@ -91,7 +91,7 @@
         <label>Categoría</label>
         <select formControlName="categoryId">
           <option value="">Selecciona una categoría</option>
-          <option *ngFor="let cat of categories" [value]="cat._id">{{ cat.icon }} {{ cat.name }}</option>
+          <option *ngFor="let cat of categories" [value]="cat._id">{{ cat.name }}</option>
         </select>
         <div class="quick-cat-toggle">
           <button type="button" class="btn-link" (click)="toggleQuickCat()">
