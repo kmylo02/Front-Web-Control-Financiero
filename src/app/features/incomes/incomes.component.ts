@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { NgIf, NgFor, DatePipe } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { IncomesService } from '../../core/services/incomes.service';
 import { CategoriesService } from '../../core/services/categories.service';
@@ -11,7 +11,7 @@ import { Income, Category, MONTH_NAMES } from '../../core/models';
   selector: 'app-incomes',
   templateUrl: './incomes.component.html',
   styleUrls: ['../expenses/expenses.component.scss'],
-  imports: [NgIf, NgFor, DatePipe, ReactiveFormsModule],
+  imports: [NgIf, NgFor, DatePipe, ReactiveFormsModule, FormsModule],
 })
 export class IncomesComponent implements OnInit {
   loading = true;
@@ -23,12 +23,37 @@ export class IncomesComponent implements OnInit {
   showQuickCat = false;
   form!: FormGroup;
 
+  searchText = '';
+  sortBy: 'date-desc' | 'date-asc' | 'amount-desc' | 'amount-asc' = 'date-desc';
+
   today = new Date();
   year  = this.today.getFullYear();
   month = this.today.getMonth() + 1;
 
   get monthName() { return MONTH_NAMES[this.month - 1]; }
-  get total()     { return this.incomes.reduce((s, i) => s + i.amount, 0); }
+
+  get filtered(): Income[] {
+    let list = this.searchText.trim()
+      ? this.incomes.filter(i => i.description.toLowerCase().includes(this.searchText.toLowerCase()))
+      : [...this.incomes];
+    switch (this.sortBy) {
+      case 'date-desc':
+        list.sort((a, b) => {
+          const d = b.date.localeCompare(a.date);
+          return d !== 0 ? d : (b.createdAt ?? '').localeCompare(a.createdAt ?? '');
+        }); break;
+      case 'date-asc':
+        list.sort((a, b) => {
+          const d = a.date.localeCompare(b.date);
+          return d !== 0 ? d : (a.createdAt ?? '').localeCompare(b.createdAt ?? '');
+        }); break;
+      case 'amount-desc': list.sort((a, b) => b.amount - a.amount); break;
+      case 'amount-asc':  list.sort((a, b) => a.amount - b.amount); break;
+    }
+    return list;
+  }
+
+  get total() { return this.filtered.reduce((s, i) => s + i.amount, 0); }
 
   constructor(
     private incomesService: IncomesService,
@@ -51,8 +76,8 @@ export class IncomesComponent implements OnInit {
 
   private buildForm(inc?: Income): void {
     const dateStr = inc?.date
-      ? new Date(inc.date).toISOString().split('T')[0]
-      : new Date().toISOString().split('T')[0];
+      ? (inc.date as string).substring(0, 10)
+      : this.todayLocal();
     this.form = this.fb.group({
       amount:      [inc?.amount ?? '', [Validators.required, Validators.min(1)]],
       description: [inc?.description ?? '', Validators.required],
@@ -60,6 +85,11 @@ export class IncomesComponent implements OnInit {
       categoryId:  [typeof inc?.categoryId === 'object' ? (inc.categoryId as any)._id : (inc?.categoryId ?? ''), Validators.required],
       notes:       [inc?.notes ?? ''],
     });
+  }
+
+  private todayLocal(): string {
+    const t = new Date();
+    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
   }
 
   changeMonth(dir: number): void {
@@ -99,6 +129,9 @@ export class IncomesComponent implements OnInit {
     if (!ok) return;
     this.incomesService.delete(id).subscribe(() => this.loadIncomes());
   }
+
+  getCatName(inc: Income): string  { return typeof inc.categoryId === 'object' ? (inc.categoryId as any).name : ''; }
+  getCatColor(inc: Income): string { return typeof inc.categoryId === 'object' ? (inc.categoryId as any).color : '#22c55e'; }
 
   formatCurrency(val: number): string {
     return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(val);
