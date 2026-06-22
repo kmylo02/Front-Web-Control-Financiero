@@ -37,5 +37,24 @@
 }
 
 @media (max-width: 900px) {
-  .compare-grid, .charts-grid { grid-template-columns: 1fr; }
+  .compare-grid, .charts-grid, .balance-row { grid-template-columns: 1fr 1fr; }
 }
+
+.balance-highlight { border-left: 4px solid var(--primary); }
+
+.balance-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  @media (max-width: 900px) { grid-template-columns: repeat(2, 1fr); }
+}
+
+.balance-item {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 10px 12px; border-radius: 8px; background: var(--bg);
+  &.total-item { border-top: 2px solid var(--border); }
+  .bal-label { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+  .bal-value { font-size: 15px; font-weight: 600; }
+}
+
+.fw-700 { font-weight: 700; }

@@ -12,6 +12,17 @@
   <button class="btn btn-ghost btn-icon" (click)="changeMonth(1)">›</button>
 </div>
 
+<!-- Balance por banco -->
+<div *ngIf="bankBalance.length > 0" class="bank-grid mb-24">
+  <div *ngFor="let b of bankBalance" class="bank-card">
+    <div class="bank-icon">🏦</div>
+    <div class="bank-info">
+      <span class="bank-name">{{ b.bank }}</span>
+      <span class="bank-amount text-success">{{ formatCurrency(b.total) }}</span>
+    </div>
+  </div>
+</div>
+
 <div *ngIf="loading" class="spinner"></div>
 
 <div *ngIf="!loading" class="card">
@@ -37,6 +48,7 @@
         <tr>
           <th>Descripción</th>
           <th>Categoría</th>
+          <th>Banco</th>
           <th>Fecha</th>
           <th>Monto</th>
           <th></th>
@@ -51,6 +63,10 @@
             </div>
           </td>
           <td>{{ getCatName(inc) }}</td>
+          <td>
+            <span *ngIf="inc.bank" class="bank-chip">🏦 {{ inc.bank }}</span>
+            <span *ngIf="!inc.bank" class="text-muted">—</span>
+          </td>
           <td>{{ inc.date | date:'d MMM yyyy':'UTC' }}</td>
           <td class="fw-600 text-success">{{ formatCurrency(inc.amount) }}</td>
           <td>
@@ -84,20 +100,26 @@
         <div class="form-group"><label>Monto</label><input type="number" formControlName="amount" min="1" /></div>
         <div class="form-group"><label>Fecha</label><input type="date" formControlName="date" /></div>
       </div>
-      <div class="form-group">
-        <label>Categoría</label>
-        <select formControlName="categoryId">
-          <option value="">Selecciona categoría</option>
-          <option *ngFor="let cat of categories" [value]="cat._id">{{ cat.name }}</option>
-        </select>
-        <div class="quick-cat-toggle">
-          <button type="button" class="btn-link" (click)="toggleQuickCat()">
-            {{ showQuickCat ? '✕ Cancelar' : '+ Nueva categoría' }}
-          </button>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Categoría</label>
+          <select formControlName="categoryId">
+            <option value="">Selecciona categoría</option>
+            <option *ngFor="let cat of categories" [value]="cat._id">{{ cat.name }}</option>
+          </select>
+          <div class="quick-cat-toggle">
+            <button type="button" class="btn-link" (click)="toggleQuickCat()">
+              {{ showQuickCat ? '✕ Cancelar' : '+ Nueva categoría' }}
+            </button>
+          </div>
+          <div *ngIf="showQuickCat" class="quick-cat-form">
+            <input #quickCatInput placeholder="Nombre de la categoría" (keyup.enter)="createQuickCat(quickCatInput.value, quickCatInput)" />
+            <button type="button" class="btn btn-success btn-sm" (click)="createQuickCat(quickCatInput.value, quickCatInput)">Crear</button>
+          </div>
         </div>
-        <div *ngIf="showQuickCat" class="quick-cat-form">
-          <input #quickCatInput placeholder="Nombre de la categoría" (keyup.enter)="createQuickCat(quickCatInput.value, quickCatInput)" />
-          <button type="button" class="btn btn-success btn-sm" (click)="createQuickCat(quickCatInput.value, quickCatInput)">Crear</button>
+        <div class="form-group">
+          <label>Banco / Cuenta</label>
+          <input formControlName="bank" placeholder="Ej: Bancolombia, Nequi…" />
         </div>
       </div>
       <div class="form-group"><label>Notas</label><input formControlName="notes" /></div>

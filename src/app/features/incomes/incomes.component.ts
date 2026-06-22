@@ -74,6 +74,15 @@ export class IncomesComponent implements OnInit {
     });
   }
 
+  get bankBalance(): { bank: string; total: number }[] {
+    const map = new Map<string, number>();
+    for (const i of this.incomes) {
+      const b = i.bank?.trim() || 'Sin banco';
+      map.set(b, (map.get(b) ?? 0) + i.amount);
+    }
+    return Array.from(map.entries()).map(([bank, total]) => ({ bank, total })).sort((a, b) => b.total - a.total);
+  }
+
   private buildForm(inc?: Income): void {
     const dateStr = inc?.date
       ? (inc.date as string).substring(0, 10)
@@ -83,6 +92,7 @@ export class IncomesComponent implements OnInit {
       description: [inc?.description ?? '', Validators.required],
       date:        [dateStr, Validators.required],
       categoryId:  [typeof inc?.categoryId === 'object' ? (inc.categoryId as any)._id : (inc?.categoryId ?? ''), Validators.required],
+      bank:        [inc?.bank ?? ''],
       notes:       [inc?.notes ?? ''],
     });
   }

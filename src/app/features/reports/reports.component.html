@@ -28,35 +28,64 @@
     </div>
   </div>
 
+  <!-- Balance mes actual -->
+  <div *ngIf="comparison" class="card mb-16 balance-highlight">
+    <h3 class="section-title">Balance {{ monthName }} {{ year }}</h3>
+    <div class="balance-row">
+      <div class="balance-item">
+        <span class="bal-label">Ingresos</span>
+        <span class="bal-value text-success">{{ formatCurrency(comparison.current.incomes) }}</span>
+      </div>
+      <div class="balance-item">
+        <span class="bal-label">Gastos regulares</span>
+        <span class="bal-value text-danger">{{ formatCurrency(comparison.current.expenses) }}</span>
+      </div>
+      <div class="balance-item">
+        <span class="bal-label">Agenda pagada</span>
+        <span class="bal-value text-danger">{{ formatCurrency(comparison.current.agendaTotalPaid) }}</span>
+      </div>
+      <div class="balance-item total-item">
+        <span class="bal-label">Total gastos</span>
+        <span class="bal-value text-danger fw-700">{{ formatCurrency(comparison.current.totalGastado) }}</span>
+      </div>
+      <div class="balance-item total-item">
+        <span class="bal-label">Balance neto</span>
+        <span class="bal-value fw-700" [class.text-success]="comparison.current.balance >= 0" [class.text-danger]="comparison.current.balance < 0">
+          {{ formatCurrency(comparison.current.balance) }}
+        </span>
+      </div>
+    </div>
+  </div>
+
   <!-- Comparativa mes actual -->
   <div *ngIf="comparison" class="card mb-16">
-    <h3 class="section-title">Comparativa {{ monthName }} {{ year }}</h3>
+    <h3 class="section-title">Comparativa gastos totales — {{ monthName }} {{ year }}</h3>
     <div class="compare-grid">
       <div class="compare-card">
         <h4>vs Mes anterior</h4>
         <div class="compare-row">
-          <span>Gastos</span>
+          <span>Gastos totales</span>
           <span class="fw-600" [class]="changeClass(comparison.changes.expensesVsPreviousMonth, true)">
             {{ changeSign(comparison.changes.expensesVsPreviousMonth) }}
           </span>
         </div>
         <div class="compare-amounts">
-          <span>Actual: {{ formatCurrency(comparison.current.expenses) }}</span>
-          <span class="text-muted">Anterior: {{ formatCurrency(comparison.previousMonth.expenses) }}</span>
+          <span>Actual: {{ formatCurrency(comparison.current.totalGastado) }}</span>
+          <span class="text-muted">Anterior: {{ formatCurrency(comparison.previousMonth.totalGastado) }}</span>
         </div>
       </div>
 
       <div class="compare-card">
         <h4>vs Mismo mes año anterior</h4>
         <div class="compare-row">
-          <span>Gastos</span>
+          <span>Gastos totales</span>
           <span class="fw-600" [class]="changeClass(comparison.changes.expensesVsLastYear, true)">
             {{ changeSign(comparison.changes.expensesVsLastYear) }}
           </span>
         </div>
         <div class="compare-amounts">
-          <span>Actual: {{ formatCurrency(comparison.current.expenses) }}</span>
-          <span class="text-muted">Año pasado: {{ formatCurrency(comparison.sameMonthLastYear.expenses) }}</span>
+          <span>Actual: {{ formatCurrency(comparison.current.totalGastado) }}</span>
+          <span class="text-muted">Año pasado: {{ formatCurrency(comparison.sameMonthLastYear.totalGastado) }}</span>
         </div>
       </div>
 

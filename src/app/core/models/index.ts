@@ -38,6 +38,7 @@ export interface Income {
   date: string;
   categoryId: Category | string;
   isRecurring: boolean;
+  bank: string;
   notes: string;
   createdAt: string;
 }
@@ -86,6 +87,8 @@ export interface MonthlySummary {
   year: number;
   month: number;
   totalExpenses: number;
+  agendaTotalPaid: number;
+  totalGastado: number;
   totalIncomes: number;
   balance: number;
   byCategory: { category: Category; total: number; count: number }[];
@@ -110,9 +113,9 @@ export interface YearlySummary {
 }
 
 export interface MonthComparison {
-  current: { year: number; month: number; expenses: number; incomes: number; balance: number };
-  previousMonth: { year: number; month: number; expenses: number; incomes: number };
-  sameMonthLastYear: { year: number; month: number; expenses: number; incomes: number };
+  current: { year: number; month: number; expenses: number; agendaTotalPaid: number; totalGastado: number; incomes: number; balance: number };
+  previousMonth: { year: number; month: number; expenses: number; agendaTotalPaid: number; totalGastado: number; incomes: number };
+  sameMonthLastYear: { year: number; month: number; expenses: number; agendaTotalPaid: number; totalGastado: number; incomes: number };
   changes: { expensesVsPreviousMonth: number | null; expensesVsLastYear: number | null };
 }
 
