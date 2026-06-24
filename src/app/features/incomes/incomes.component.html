@@ -119,7 +119,10 @@
         </div>
         <div class="form-group">
           <label>Banco / Cuenta</label>
-          <input formControlName="bank" placeholder="Ej: Bancolombia, Nequi…" />
+          <select formControlName="bank">
+            <option value="">Sin banco</option>
+            <option *ngFor="let b of banks" [value]="b">{{ b }}</option>
+          </select>
         </div>
       </div>
       <div class="form-group"><label>Notas</label><input formControlName="notes" /></div>

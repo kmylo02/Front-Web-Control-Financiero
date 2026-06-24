@@ -5,7 +5,7 @@ import { forkJoin } from 'rxjs';
 import { IncomesService } from '../../core/services/incomes.service';
 import { CategoriesService } from '../../core/services/categories.service';
 import { DialogService } from '../../core/services/dialog.service';
-import { Income, Category, MONTH_NAMES } from '../../core/models';
+import { Income, Category, MONTH_NAMES, COLOMBIAN_BANKS } from '../../core/models';
 
 @Component({
   selector: 'app-incomes',
@@ -25,6 +25,7 @@ export class IncomesComponent implements OnInit {
 
   searchText = '';
   sortBy: 'date-desc' | 'date-asc' | 'amount-desc' | 'amount-asc' = 'date-desc';
+  readonly banks = COLOMBIAN_BANKS;
 
   today = new Date();
   year  = this.today.getFullYear();
