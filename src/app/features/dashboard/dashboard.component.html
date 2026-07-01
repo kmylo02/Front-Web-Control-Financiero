@@ -63,14 +63,19 @@
     </div>
 
     <div class="stat-card">
-      <div class="stat-label">Balance disponible</div>
-      <div class="stat-value" [class.text-success]="balance >= 0" [class.text-danger]="balance < 0">
-        {{ formatCurrency(balance) }}
+      <div class="stat-label">{{ prevSummary ? 'Total disponible' : 'Balance disponible' }}</div>
+      <div class="stat-value" [class.text-success]="totalDisponible >= 0" [class.text-danger]="totalDisponible < 0">
+        {{ formatCurrency(totalDisponible) }}
+      </div>
+      <div class="stat-breakdown" *ngIf="prevSummary && prevMonthBalance !== 0">
+        <span class="breakdown-chip">{{ prevMonthName }}: {{ formatCurrency(prevMonthBalance) }}</span>
+        <span class="breakdown-plus">+</span>
+        <span class="breakdown-chip">{{ monthName }}: {{ formatCurrency(balance) }}</span>
       </div>
       <div class="stat-change" *ngIf="agendaTotalPending > 0">
         <span class="text-muted">Si paga todo: </span>
-        <span [class.text-success]="balanceProyectado >= 0" [class.text-danger]="balanceProyectado < 0">
-          {{ formatCurrency(balanceProyectado) }}
+        <span [class.text-success]="(totalDisponible - agendaTotalPending) >= 0" [class.text-danger]="(totalDisponible - agendaTotalPending) < 0">
+          {{ formatCurrency(totalDisponible - agendaTotalPending) }}
         </span>
       </div>
     </div>
