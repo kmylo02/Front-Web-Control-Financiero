@@ -137,7 +137,92 @@
 
 .agenda-amount { font-weight: 600; font-size: 13px; white-space: nowrap; }
 
+// Month navigation
+.month-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.month-nav-label {
+  font-size: 14px;
+  color: var(--text-muted);
+  min-width: 120px;
+  text-align: center;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.month-nav-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  font-size: 16px;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s, color .15s;
+
+  &:hover:not(:disabled) { background: var(--bg); color: var(--text); }
+  &:disabled { opacity: 0.3; cursor: default; }
+}
+
+// Carry-over banner (prev month balance)
+.carryover-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: linear-gradient(135deg, #f0fdf4, #eff6ff);
+  border: 1px solid #d1fae5;
+  border-radius: 12px;
+  padding: 14px 20px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.carryover-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.carryover-lbl {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.carryover-val {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.carryover-plus {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.carryover-total-item {
+  margin-left: auto;
+  padding-left: 16px;
+  border-left: 2px solid #d1fae5;
+}
+
+.carryover-total-val {
+  font-size: 20px;
+}
+
 @media (max-width: 900px) {
   .charts-grid, .recent-grid { grid-template-columns: 1fr; }
   .stat-cards [style*="span 2"] { grid-column: span 1; }
+  .carryover-banner { gap: 10px; }
+  .carryover-total-item { margin-left: 0; border-left: none; padding-left: 0; }
 }

@@ -1,7 +1,8 @@
 import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 import { NgIf, NgFor, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { Chart, registerables } from 'chart.js';
 import { ReportsService } from '../../core/services/reports.service';
 import { ExpensesService } from '../../core/services/expenses.service';
@@ -29,10 +30,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
   monthName = MONTH_NAMES[this.month - 1];
 
   summary:          MonthlySummary | null = null;
+  prevSummary:      MonthlySummary | null = null;
   recentExpenses:   Expense[]   = [];
   recentIncomes:    Income[]    = [];
   pendingRecurring: Recurring[] = [];
   agendaBills:      BillItem[]  = [];
+
+  get prevMonthYear()  { return this.month === 1 ? this.year - 1 : this.year; }
+  get prevMonthNum()   { return this.month === 1 ? 12 : this.month - 1; }
+  get prevMonthName()  { return MONTH_NAMES[this.prevMonthNum - 1]; }
+  get isCurrentMonth() { return this.year === this.today.getFullYear() && this.month === this.today.getMonth() + 1; }
 
   get agendaPending()      { return this.agendaBills.filter(b => b.status === 'pending'); }
   get agendaPaid()         { return this.agendaBills.filter(b => b.status === 'paid'); }
@@ -41,10 +48,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   get agendaTotal()        { return this.agendaBills.reduce((s, b) => s + b.amount, 0); }
   get agendaPercent()      { return this.agendaTotal > 0 ? Math.round((this.agendaTotalPaid / this.agendaTotal) * 100) : 0; }
 
-  // Balance combinado: gastos regulares + agenda pagada
   get totalGastado()      { return (this.summary?.totalExpenses ?? 0) + this.agendaTotalPaid; }
   get balance()           { return (this.summary?.totalIncomes ?? 0) - this.totalGastado; }
   get balanceProyectado() { return this.balance - this.agendaTotalPending; }
+  get prevMonthBalance()  { return this.prevSummary?.balance ?? 0; }
+  get totalDisponible()   { return this.prevMonthBalance + this.balance; }
 
   get agendaSorted(): BillItem[] {
     const pending = this.agendaPending.slice().sort((a, b) => a.dueDay - b.dueDay);
@@ -70,43 +78,55 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private barChart?:   Chart;
 
   constructor(
-    private reportsService:  ReportsService,
-    private expensesService: ExpensesService,
-    private incomesService:  IncomesService,
+    private reportsService:   ReportsService,
+    private expensesService:  ExpensesService,
+    private incomesService:   IncomesService,
     private recurringService: RecurringService,
     private billItemsService: BillItemsService,
   ) {}
 
-  ngOnInit(): void {
-    forkJoin({
-      summary:  this.reportsService.getMonthly(this.year, this.month),
-      expenses: this.expensesService.getAll(this.year, this.month),
-      incomes:  this.incomesService.getAll(this.year, this.month),
-      pending:  this.recurringService.getPending(),
-      yearly:   this.reportsService.getYearly(this.year),
-      bills:    this.billItemsService.getByMonth(this.year, this.month),
-    }).subscribe({
-      next: ({ summary, expenses, incomes, pending, yearly, bills }) => {
-        this.summary          = summary;
-        this.recentExpenses   = expenses.slice(0, 5);
-        this.recentIncomes    = incomes.slice(0, 5);
-        this.pendingRecurring = pending;
-        this.agendaBills      = bills;
-        this.loading = false;
-
-        // Let Angular render the *ngIf blocks before drawing charts
-        setTimeout(() => {
-          this.renderDonut(summary);
-          this.renderBar(yearly);
-        }, 0);
-      },
-      error: () => { this.loading = false; },
-    });
-  }
+  ngOnInit(): void { this.loadData(); }
 
   ngOnDestroy(): void {
     this.donutChart?.destroy();
     this.barChart?.destroy();
+  }
+
+  changeMonth(dir: number): void {
+    this.month += dir;
+    if (this.month > 12) { this.month = 1; this.year++; }
+    if (this.month < 1)  { this.month = 12; this.year--; }
+    this.monthName = MONTH_NAMES[this.month - 1];
+    this.loadData();
+  }
+
+  loadData(): void {
+    this.loading = true;
+    forkJoin({
+      summary:     this.reportsService.getMonthly(this.year, this.month).pipe(catchError(() => of(null))),
+      prevSummary: this.reportsService.getMonthly(this.prevMonthYear, this.prevMonthNum).pipe(catchError(() => of(null))),
+      expenses:    this.expensesService.getAll(this.year, this.month).pipe(catchError(() => of([]))),
+      incomes:     this.incomesService.getAll(this.year, this.month).pipe(catchError(() => of([]))),
+      pending:     this.recurringService.getPending().pipe(catchError(() => of([]))),
+      yearly:      this.reportsService.getYearly(this.year).pipe(catchError(() => of(null))),
+      bills:       this.billItemsService.getByMonth(this.year, this.month).pipe(catchError(() => of([]))),
+    }).subscribe({
+      next: ({ summary, prevSummary, expenses, incomes, pending, yearly, bills }) => {
+        this.summary          = summary as MonthlySummary | null;
+        this.prevSummary      = prevSummary as MonthlySummary | null;
+        this.recentExpenses   = (expenses as Expense[]).slice(0, 5);
+        this.recentIncomes    = (incomes as Income[]).slice(0, 5);
+        this.pendingRecurring = pending as Recurring[];
+        this.agendaBills      = bills as BillItem[];
+        this.loading = false;
+
+        setTimeout(() => {
+          if (summary) this.renderDonut(summary as MonthlySummary);
+          if (yearly) this.renderBar(yearly);
+        }, 0);
+      },
+      error: () => { this.loading = false; },
+    });
   }
 
   private renderDonut(summary: MonthlySummary): void {

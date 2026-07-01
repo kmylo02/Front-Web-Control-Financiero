@@ -6,9 +6,37 @@
   <div class="page-header">
     <div>
       <h1>Dashboard</h1>
-      <p class="text-muted">{{ monthName }} {{ year }}</p>
+      <div class="month-nav">
+        <button class="month-nav-btn" (click)="changeMonth(-1)" title="Mes anterior">‹</button>
+        <span class="month-nav-label">{{ monthName }} {{ year }}</span>
+        <button class="month-nav-btn" (click)="changeMonth(1)" [disabled]="isCurrentMonth" title="Mes siguiente">›</button>
+      </div>
     </div>
     <a routerLink="/expenses" class="btn btn-primary">+ Nuevo gasto</a>
+  </div>
+
+  <!-- Saldo arrastrado del mes anterior -->
+  <div class="carryover-banner" *ngIf="prevSummary">
+    <div class="carryover-item">
+      <span class="carryover-lbl">Saldo {{ prevMonthName }}</span>
+      <span class="carryover-val" [class.text-success]="prevMonthBalance >= 0" [class.text-danger]="prevMonthBalance < 0">
+        {{ formatCurrency(prevMonthBalance) }}
+      </span>
+    </div>
+    <span class="carryover-plus">+</span>
+    <div class="carryover-item">
+      <span class="carryover-lbl">Este mes ({{ monthName }})</span>
+      <span class="carryover-val" [class.text-success]="balance >= 0" [class.text-danger]="balance < 0">
+        {{ formatCurrency(balance) }}
+      </span>
+    </div>
+    <span class="carryover-plus">=</span>
+    <div class="carryover-item carryover-total-item">
+      <span class="carryover-lbl">Total disponible</span>
+      <span class="carryover-val carryover-total-val" [class.text-success]="totalDisponible >= 0" [class.text-danger]="totalDisponible < 0">
+        {{ formatCurrency(totalDisponible) }}
+      </span>
+    </div>
   </div>
 
   <!-- Alerta recurrentes pendientes -->
